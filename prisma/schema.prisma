@@ -1,0 +1,337 @@
+// schema.prisma
+// Indian salon booking website
+//
+// Notes
+// - Auth library tables (sessions, accounts) are NOT here: let Auth.js / Supabase Auth add its own.
+//   Our User table is the app-level profile; link it to the auth identity by phone.
+// - Money is stored as whole rupees (Int). Times are stored in UTC (timestamptz); show them in IST.
+// - On Prisma 7 or newer the datasource url may move into prisma.config.ts; keep the models as they are.
+// - Run booking_constraints.sql after the first migration. Prisma cannot express those rules.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------- enums
+
+enum Role {
+  CUSTOMER
+  BARBER
+  OWNER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum ServiceCategory {
+  HAIR
+  BEARD
+  SHAVE
+  FACIAL
+  MASSAGE
+  KIDS
+  BRIDAL
+  OTHER
+}
+
+enum BookingType {
+  IN_SALON
+  HOME_VISIT
+}
+
+enum BookingSource {
+  ONLINE
+  WALK_IN
+}
+
+enum BookingStatus {
+  PENDING // waiting for barber/owner to accept (if the salon requires it)
+  CONFIRMED
+  CHECKED_IN // customer has reached the salon (feeds the live queue later)
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REJECTED
+  NO_SHOW
+}
+
+// ---------------------------------------------------------------- users and login
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique // E.164, e.g. +919876543210
+  name      String?
+  email     String?  @unique
+  role      Role     @default(CUSTOMER)
+  language  String   @default("en") // "en", "hi", later regional languages
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  ownedSalons   Salon[]
+  barberProfile Barber?
+  addresses     Address[]
+  bookings      Booking[] @relation("CustomerBookings")
+  reviews       Review[]
+}
+
+// One row per OTP sent. Store only a hash of the code, never the code itself.
+// Use attempts + createdAt to rate-limit and lock out guessing.
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  expiresAt  DateTime  @db.Timestamptz(3)
+  attempts   Int       @default(0)
+  consumedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([phone, createdAt])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String? // "Home", "Office"
+  line1     String
+  line2     String?
+  area      String
+  city      String
+  pincode   String
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  bookings Booking[]
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------- salons, barbers, services
+
+model Salon {
+  id          String             @id @default(cuid())
+  ownerId     String
+  owner       User               @relation(fields: [ownerId], references: [id])
+  slug        String             @unique
+  name        String
+  nameHi      String?
+  description String?
+  phone       String?
+  addressLine String
+  area        String
+  city        String
+  pincode     String
+  lat         Float?
+  lng         Float?
+  status      VerificationStatus @default(PENDING) // only VERIFIED salons are listed publicly
+  offersHomeVisit Boolean        @default(false)
+  homeVisitRadiusKm Int?
+  homeVisitFeeRupees Int?
+  requiresApproval Boolean       @default(false) // if true, new online bookings start as PENDING
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime           @updatedAt @db.Timestamptz(3)
+
+  hours    SalonHours[]
+  barbers  Barber[]
+  services Service[]
+  bookings Booking[]
+  reviews  Review[]
+  tokenCounters DailyTokenCounter[]
+
+  @@index([city, area])
+  @@index([status])
+}
+
+// Opening hours for display and for "open now". Weekday: 0 = Sunday ... 6 = Saturday.
+model SalonHours {
+  id        String  @id @default(cuid())
+  salonId   String
+  salon     Salon   @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  weekday   Int
+  openMin   Int // minutes from midnight local time, e.g. 9:30 = 570
+  closeMin  Int
+  isClosed  Boolean @default(false)
+
+  @@unique([salonId, weekday])
+}
+
+model Barber {
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  user            User               @relation(fields: [userId], references: [id])
+  salonId         String
+  salon           Salon              @relation(fields: [salonId], references: [id])
+  displayName     String
+  bio             String?
+  photoUrl        String?
+  experienceYears Int                @default(0)
+  status          VerificationStatus @default(PENDING)
+  doesHomeVisits  Boolean            @default(false)
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+
+  services     BarberService[]
+  availability Availability[]
+  timeOff      TimeOff[]
+  bookings     Booking[]
+  reviews      Review[]
+
+  @@index([salonId])
+}
+
+model Service {
+  id             String          @id @default(cuid())
+  salonId        String
+  salon          Salon           @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  category       ServiceCategory
+  name           String
+  nameHi         String?
+  durationMin    Int
+  priceRupees    Int
+  homeVisitOk    Boolean         @default(false)
+  isActive       Boolean         @default(true)
+  sortOrder      Int             @default(0) // order on the rate card board
+
+  barbers      BarberService[]
+  bookingItems BookingItem[]
+
+  @@index([salonId, category])
+}
+
+// Which barber performs which service.
+model BarberService {
+  barberId  String
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([barberId, serviceId])
+}
+
+// Weekly working windows. A barber can have several rows per weekday (split shifts).
+model Availability {
+  id       String @id @default(cuid())
+  barberId String
+  barber   Barber @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  weekday  Int // 0 = Sunday ... 6 = Saturday
+  startMin Int // minutes from midnight local time
+  endMin   Int
+
+  @@index([barberId, weekday])
+}
+
+// Leave, breaks, one-off closures.
+model TimeOff {
+  id       String   @id @default(cuid())
+  barberId String
+  barber   Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt   DateTime @db.Timestamptz(3)
+  reason   String?
+
+  @@index([barberId, startsAt])
+}
+
+// ---------------------------------------------------------------- bookings and tokens
+
+// One booking = one barber, one continuous time block, one or more services.
+// A walk-in customer is also a Booking (source = WALK_IN), so queue and peak-hour data
+// come from a single table. Walk-ins may have no user account.
+model Booking {
+  id         String        @id @default(cuid())
+  token      Int // shown on the token slip; unique per salon per day
+  tokenDate  DateTime      @db.Date
+  salonId    String
+  salon      Salon         @relation(fields: [salonId], references: [id])
+  barberId   String
+  barber     Barber        @relation(fields: [barberId], references: [id])
+  customerId String?
+  customer   User?         @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: SetNull)
+  walkInName  String?
+  walkInPhone String?
+  type       BookingType   @default(IN_SALON)
+  source     BookingSource @default(ONLINE)
+  status     BookingStatus @default(CONFIRMED)
+  startsAt   DateTime      @db.Timestamptz(3)
+  endsAt     DateTime      @db.Timestamptz(3)
+  totalRupees Int
+  addressId  String? // required when type = HOME_VISIT (enforced in SQL)
+  address    Address?      @relation(fields: [addressId], references: [id])
+  notes      String?
+  cancelledAt DateTime?    @db.Timestamptz(3)
+  cancelReason String?
+
+  // Timestamps for crowd and wait-time analytics (phase 7)
+  checkedInAt DateTime? @db.Timestamptz(3)
+  startedAt   DateTime? @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  items  BookingItem[]
+  review Review?
+
+  @@unique([salonId, tokenDate, token])
+  @@index([barberId, startsAt])
+  @@index([salonId, startsAt])
+  @@index([customerId])
+}
+
+// Price and duration are copied at booking time so later menu edits don't change old bookings.
+model BookingItem {
+  id          String  @id @default(cuid())
+  bookingId   String
+  booking     Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service @relation(fields: [serviceId], references: [id])
+  priceRupees Int
+  durationMin Int
+
+  @@index([bookingId])
+}
+
+// Hands out the next token number for a salon on a given day.
+// Increment it inside the same transaction that creates the booking.
+model DailyTokenCounter {
+  salonId String
+  salon   Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  date    DateTime @db.Date
+  last    Int      @default(0)
+
+  @@id([salonId, date])
+}
+
+// ---------------------------------------------------------------- reviews
+
+// Only the customer of a COMPLETED booking may review it, one review per booking.
+model Review {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   User     @relation(fields: [customerId], references: [id])
+  salonId    String
+  salon      Salon    @relation(fields: [salonId], references: [id])
+  barberId   String?
+  barber     Barber?  @relation(fields: [barberId], references: [id])
+  rating     Int // 1 to 5, enforced in SQL
+  comment    String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([salonId])
+  @@index([barberId])
+}

@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-tile: #8FD0BC;
+  --color-teal-deep: #0F5E57;
+  --color-paper: #F6EBD0;
+  --color-ink: #2B2118;
+  --color-marigold: #F2A900;
+  --color-saffron: #E8731A;
+  --color-maroon: #7A1F2B;
+  --color-steel: #8A9299;
+  --color-pole-red: #C8262F;
+  --color-pole-blue: #1E4F9C;
+  --color-chalk: #FFFFFF;
+}
+
+body {
+  background-color: #F6EBD0;
+  color: #2B2118;
+  font-family: var(--font-body), sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Barber pole & divider keyframe animations */
+@keyframes divider-scroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 50px 0;
+  }
+}
+
+@keyframes barpole-scroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 36px;
+  }
+}
+
+@keyframes barpole-load {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.barber-divider {
+  animation: divider-scroll 4s linear infinite;
+}
+
+.barber-pole-stripe {
+  animation: barpole-scroll 3s linear infinite;
+}
+
+.barber-load-stripe {
+  animation: barpole-load 2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barber-divider,
+  .barber-pole-stripe,
+  .barber-load-stripe {
+    animation: none !important;
+  }
+}
