@@ -1,0 +1,95 @@
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canCreateBooking > allows active CUSTOMER to create booking
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canCreateBooking > denies inactive CUSTOMER
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canCreateBooking > denies BARBER, OWNER, ADMIN from creating customer bookings
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canCreateBooking > denies unauthenticated or null user
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canRescheduleBooking > allows the customer who owns the booking
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canRescheduleBooking > denies another customer from rescheduling
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canRescheduleBooking > denies assigned barber and salon owner (customer self-serve only)
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Policy: canRescheduleBooking > allows ADMIN to reschedule
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > prevents double booking in a 5-way parallel race (exactly 1 wins, 4 get SLOT_TAKEN)
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > enforces MAX_ACTIVE_BOOKINGS_PER_CUSTOMER limit
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > prevents customer from booking overlapping slots across any barber or salon
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > allows customer to cancel > 60 min before start, but rejects within 60 min cutoff
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > reschedules successfully inside a transaction, and rolls back if new slot is taken
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > strictly isolates booking access between customers and barbers
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 1: rejects booking requests for off-grid start times (e.g. 10:07)
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 2: rejects booking requests for times outside operational salon or barber hours
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 3: rejects booking requests in the past or beyond the 14-day advance window
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 4: rejects services belonging to a different salon
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 5: rejects barbers not mapped to all selected services via BarberService
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 6: rejects unverified, rejected, or suspended salons and barbers
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 7: rejects inactive services (isActive: false)
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 8: rejects empty services array and duplicate service IDs
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 9: computes tamper-proof pricing and duration solely from database records
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 10 & 11: allocates sequential daily tokens and rolls back counter on transaction failure
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 12: creates bookings with status PENDING when salon.requiresApproval is true
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 13: blocks customers exceeding MAX_BOOKINGS_CREATED_PER_HOUR (5 bookings/hour)
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 14: allows staff to cancel at any time with mandatory non-empty reason; rejects empty reason
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 15: slot reuse: cancelling a booking immediately frees that slot for new reservations
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 16: double-submission guard: concurrent identical booking submissions produce exactly one booking
+src/tests/phase3-booking.test.ts > Phase 3: Real Slot Booking & Policy Tests > Booking Integration & Concurrency on Supabase > Rule 17: role validation in core service: rejects createBooking for non-customer roles directly in createBooking
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > accepts standard 10-digit Indian mobile numbers and normalises to E.164
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > accepts numbers with +91 prefix and formatting characters (spaces, dashes)
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > accepts numbers with leading 0 (trunk prefix)
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > accepts numbers starting with 91 without plus
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > rejects numbers that are too short
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > rejects strings containing letters
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Phone Normalisation (normalizeIndianPhone) > rejects landline numbers in India
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Open Redirect Protection (validateCallbackUrl) > allows valid relative paths
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Open Redirect Protection (validateCallbackUrl) > rejects protocol-relative URLs starting with //
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Open Redirect Protection (validateCallbackUrl) > rejects absolute URLs starting with http:// or https://
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Open Redirect Protection (validateCallbackUrl) > rejects URLs containing backslashes
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Open Redirect Protection (validateCallbackUrl) > returns null for empty, whitespace, or invalid types
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Test OTP Guard & Environment Validation > accepts test OTP 123456 only for seeded numbers in development
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Test OTP Guard & Environment Validation > rejects test OTP when APP_ENV is production
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Test OTP Guard & Environment Validation > startup validation throws if ALLOW_TEST_OTP is true while APP_ENV=production or NODE_ENV=production
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Test OTP Guard & Environment Validation > startup validation throws when AUTH_SECRET is missing or empty outside tests
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Test OTP Guard & Environment Validation > startup validation throws when OTP_PEPPER is missing or empty outside tests
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > allows booking viewing only to customer owner, assigned barber, salon owner, or admin
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > allows updating booking status only to assigned barber, salon owner, or admin (customers cannot)
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > allows cancelling a booking to owning customer, assigned barber, salon owner, or admin
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > allows managing a salon only to its owner or admin
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > enforces same-salon barber isolation: Barber A cannot view or update Barber B booking in the same salon
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > enforces cross-salon owner isolation: Owner of Salon A cannot view or update bookings belonging to Salon B
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > enforces canManageBarber and canManageBarberAvailability granularity
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Central Policy Module (src/lib/policies.ts) > restricts admin actions strictly to ADMIN role
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > generates HMAC hash and uses constant-time compare
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > issues OTP, stores only hash, and allows single-use verification
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > rejects expired OTP code
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > 5 wrong attempts invalidate the code even if the correct code follows
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > issuing a newer OTP invalidates previous unconsumed codes
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > enforces 30s resend cooldown for the same phone
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > enforces max 3 OTP requests per phone per 10 minutes
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > OTP Service Logic & Database Rules > enforces IP rate limits for OTP requests and verification attempts
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > new phone login creates a CUSTOMER role; cannot escalate own role
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > existing barber logging in keeps BARBER role
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > deactivated user cannot log in and has null access
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > admin approve action verifies pending salon, making it visible publicly; suspend hides it
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > prevents mass-assignment / role escalation on account update: role field is stripped and remains CUSTOMER
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > enforces immediate deactivation via getCurrentUser: active user returns profile, deactivated user returns null
+src/tests/phase2-auth.test.ts > Phase 2: Authentication, Roles and Authorization Tests > Integration Flow & Database Role Verification > creates new users with default language "en" matching schema.prisma definition
+src/tests/db-constraints.test.ts > Database Constraints & Exclusion Rules (PostgreSQL Supabase) > rejects two overlapping active bookings for the same barber with Postgres error 23P01
+src/tests/db-constraints.test.ts > Database Constraints & Exclusion Rules (PostgreSQL Supabase) > allows back-to-back bookings where one ends exactly when the next starts
+src/tests/db-constraints.test.ts > Database Constraints & Exclusion Rules (PostgreSQL Supabase) > allows a new booking on a slot that was previously CANCELLED
+src/tests/db-constraints.test.ts > Database Constraints & Exclusion Rules (PostgreSQL Supabase) > rejects a booking where endsAt <= startsAt with check constraint error
+src/tests/phase0-db.test.ts > Phase 0 Database & Constraint Verification > verifies seeded salons, barbers and services exist
+src/tests/phase0-db.test.ts > Phase 0 Database & Constraint Verification > rejects overlapping CONFIRMED bookings with Postgres exclusion constraint 23P01 (booking_no_overlap)
+src/tests/phase1-ui.test.ts > Phase 1 Public Salon Queries & Security Verification > returns verified salons (Sharma Ji Gents Parlour) and strictly excludes pending salons (Royal Ustaad)
+src/tests/phase1-ui.test.ts > Phase 1 Public Salon Queries & Security Verification > getSalonBySlug returns verified salon and returns null for pending or missing salon
+src/tests/phase1-ui.test.ts > Phase 1 Service Grouping & Calculation Logic > groups services accurately by ServiceCategory
+src/tests/phase1-ui.test.ts > Phase 1 Service Grouping & Calculation Logic > calculates total price and duration accurately for multiple selected service IDs
+src/tests/phase1-ui.test.ts > Phase 1 Service Grouping & Calculation Logic > returns zero values when no services are selected
+src/tests/phase1-ui.test.ts > Phase 1 Time Helpers Verification > formats minutes from midnight into 12-hour AM/PM format
+src/tests/phase1-ui.test.ts > Phase 1 Time Helpers Verification > correctly determines if salon is open or closed based on hours
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > generates 15-minute grid slots for full day with lead time marking past slots
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > handles split shifts correctly with no slots in between shifts
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > clips barber availability to salon operating hours
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > marks slots as too_short when duration exceeds window closing boundary
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > blocks slots overlapping with TimeOff
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > blocks slots overlapping active bookings, but ignores cancelled bookings
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > returns empty array when salon is closed or date is out of range
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > handles multi-hour duration (e.g. 75 min and 135 min)
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > boundary back-to-back: slot starting at 10:45 is available when preceding booking ends at 10:45
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > exact closing boundary: 30-min slot ending exactly at closing is allowed; ending at close + 1 min is flagged too_short
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > varying durations: generates valid slots for 15-minute and 45-minute service durations across regular windows
+src/tests/phase3-slots.test.ts > Phase 3: Slot Generation (generateSlots) > day window boundaries: Day 14 returns valid slots; Day 15 returns an empty array []

@@ -3,19 +3,33 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
-const cspHeader = `
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval';
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https:;
-  font-src 'self' data:;
-  connect-src 'self' https://*.supabase.co https://*.supabase.com;
-  object-src 'none';
-  base-uri 'self';
-  form-action 'self';
-  frame-ancestors 'none';
-  upgrade-insecure-requests;
-`.replace(/\s{2,}/g, ' ').trim();
+const isProd = process.env.NODE_ENV === 'production';
+
+function getCspHeader(): string {
+  const scriptSrc = isProd
+    ? "script-src 'self' 'unsafe-inline';"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval';";
+
+  const upgradeInsecure = isProd ? 'upgrade-insecure-requests;' : '';
+
+  return `
+    default-src 'self';
+    ${scriptSrc}
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data: https:;
+    font-src 'self' data:;
+    connect-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    ${upgradeInsecure}
+  `
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+const cspHeader = getCspHeader();
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

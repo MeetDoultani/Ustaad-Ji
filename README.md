@@ -92,8 +92,14 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ### 5. Running Tests & Linter
 ```bash
-# Run Vitest test suite (including DB constraints, UI, and Phase 2 Auth/Policies)
+# Run Vitest test suite (all 75 tests across DB constraints, UI, Auth, and Slot Booking)
 npm run test
+
+# Run tests under strict UTC timezone
+npm run test:utc
+
+# Run tests under Asia/Kolkata (IST) timezone
+npm run test:ist
 
 # Run ESLint
 npm run lint
@@ -101,6 +107,7 @@ npm run lint
 # Run Next.js production build
 npm run build
 ```
+
 
 ### 6. Management Scripts
 ```bash

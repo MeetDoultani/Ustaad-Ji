@@ -8,7 +8,6 @@ const PROTECTED_PREFIXES = [
   '/dashboard',
   '/admin',
   '/bookings',
-  '/book',
   '/account',
 ];
 

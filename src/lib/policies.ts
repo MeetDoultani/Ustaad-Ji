@@ -214,3 +214,32 @@ export function canViewAdminArea(user: PolicyUser | null | undefined): boolean {
   if (!isValidUser(user)) return false;
   return user.role === Role.ADMIN;
 }
+
+/**
+ * Authorization: Create a booking.
+ * Allowed: Active CUSTOMER only.
+ */
+export function canCreateBooking(user: PolicyUser | null | undefined): boolean {
+  if (!isValidUser(user)) return false;
+  return user.role === Role.CUSTOMER;
+}
+
+/**
+ * Authorization: Reschedule a booking.
+ * Allowed: Active CUSTOMER who owns the booking, or ADMIN.
+ */
+export function canRescheduleBooking(
+  user: PolicyUser | null | undefined,
+  booking: PolicyBooking | null | undefined
+): boolean {
+  if (!isValidUser(user) || !booking) return false;
+
+  if (user.role === Role.ADMIN) return true;
+
+  if (user.role === Role.CUSTOMER && user.id === booking.customerId) {
+    return true;
+  }
+
+  return false;
+}
+

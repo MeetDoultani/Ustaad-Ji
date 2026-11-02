@@ -1,4 +1,5 @@
 import { PrismaClient, Role, VerificationStatus, ServiceCategory, BookingType, BookingSource, BookingStatus } from '@prisma/client';
+import { utcToIstDetails, getNextIstDates, toTokenDateUtc, istToUtcDate } from '../src/lib/time';
 
 // Production safety guard: Never seed a production database!
 if (process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production') {
@@ -368,26 +369,32 @@ async function main() {
     }
   }
 
-  console.log('--- Seeding Token Counters and Sample Bookings ---');
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  console.log('--- Seeding Token Counters and Sample Bookings with Dynamic IST Dates ---');
+  const now = new Date();
+  const { dateIst: todayIst } = utcToIstDetails(now);
+  const tomorrowIst = getNextIstDates(2, now)[1];
+  const yesterdayTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const { dateIst: yesterdayIst } = utcToIstDetails(yesterdayTime);
 
-  const yesterday = new Date(today);
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const todayTokenDate = toTokenDateUtc(todayIst);
+  const yesterdayTokenDate = toTokenDateUtc(yesterdayIst);
+  const tomorrowTokenDate = toTokenDateUtc(tomorrowIst);
 
   // Token counters
   await prisma.dailyTokenCounter.create({
-    data: { salonId: salon1.id, date: yesterday, last: 1 },
+    data: { salonId: salon1.id, date: yesterdayTokenDate, last: 1 },
   });
   await prisma.dailyTokenCounter.create({
-    data: { salonId: salon1.id, date: today, last: 4 },
+    data: { salonId: salon1.id, date: todayTokenDate, last: 4 },
+  });
+  await prisma.dailyTokenCounter.create({
+    data: { salonId: salon1.id, date: tomorrowTokenDate, last: 2 },
   });
 
   // Sample Booking 1: Yesterday, Completed (Haircut + Champi)
-  const b1Starts = new Date(yesterday);
-  b1Starts.setUTCHours(5, 30, 0, 0); // 11:00 AM IST
-  const b1Ends = new Date(b1Starts);
-  b1Ends.setUTCMinutes(b1Ends.getUTCMinutes() + 50);
+  // 11:00 AM IST = 660 min
+  const b1Starts = istToUtcDate(yesterdayIst, 660);
+  const b1Ends = istToUtcDate(yesterdayIst, 710); // 50 min
 
   const haircutServ = createdServicesSalon1.find(s => s.name === 'Standard Haircut')!;
   const champiServ = createdServicesSalon1.find(s => s.name === 'Champi / Navratna Head Massage')!;
@@ -398,7 +405,7 @@ async function main() {
       barberId: barber1.id,
       customerId: customer1.id,
       token: 1,
-      tokenDate: yesterday,
+      tokenDate: yesterdayTokenDate,
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
       status: BookingStatus.COMPLETED,
@@ -430,10 +437,9 @@ async function main() {
   });
 
   // Sample Booking 2: Today morning, COMPLETED (Beard Trim + Shave)
-  const b2Starts = new Date(today);
-  b2Starts.setUTCHours(4, 0, 0, 0); // 9:30 AM IST
-  const b2Ends = new Date(b2Starts);
-  b2Ends.setUTCMinutes(b2Ends.getUTCMinutes() + 40);
+  // 9:30 AM IST = 570 min
+  const b2Starts = istToUtcDate(todayIst, 570);
+  const b2Ends = istToUtcDate(todayIst, 610); // 40 min
 
   const beardServ = createdServicesSalon1.find(s => s.name === 'Beard Trim & Precision Shape')!;
   const shaveServ = createdServicesSalon1.find(s => s.name === 'Classic Razor Shave')!;
@@ -444,7 +450,7 @@ async function main() {
       barberId: barber2.id,
       customerId: customer2.id,
       token: 1,
-      tokenDate: today,
+      tokenDate: todayTokenDate,
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
       status: BookingStatus.COMPLETED,
@@ -474,11 +480,10 @@ async function main() {
     },
   });
 
-  // Sample Booking 3: Today, IN_PROGRESS (Barber 1, Customer 3)
-  const b3Starts = new Date(today);
-  b3Starts.setUTCHours(8, 0, 0, 0); // 1:30 PM IST
-  const b3Ends = new Date(b3Starts);
-  b3Ends.setUTCMinutes(b3Ends.getUTCMinutes() + 30);
+  // Sample Booking 3: Today afternoon, CONFIRMED (Barber 1, Customer 3)
+  // 1:30 PM IST = 810 min
+  const b3Starts = istToUtcDate(todayIst, 810);
+  const b3Ends = istToUtcDate(todayIst, 840);
 
   await prisma.booking.create({
     data: {
@@ -486,27 +491,23 @@ async function main() {
       barberId: barber1.id,
       customerId: customer3.id,
       token: 2,
-      tokenDate: today,
+      tokenDate: todayTokenDate,
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
-      status: BookingStatus.IN_PROGRESS,
+      status: BookingStatus.CONFIRMED,
       startsAt: b3Starts,
       endsAt: b3Ends,
       totalRupees: 100,
-      checkedInAt: b3Starts,
-      startedAt: b3Starts,
       items: {
         create: [{ serviceId: haircutServ.id, priceRupees: 100, durationMin: 30 }],
       },
     },
   });
 
-  // Sample Booking 4: Today, CHECKED_IN (Barber 2, Customer 1)
-  const b4Starts = new Date(today);
-  b4Starts.setUTCHours(9, 0, 0, 0); // 2:30 PM IST
-  const b4Ends = new Date(b4Starts);
-  b4Ends.setUTCMinutes(b4Ends.getUTCMinutes() + 25);
-
+  // Sample Booking 4: Tomorrow, CONFIRMED (Barber 2, Customer 1)
+  // 11:30 AM IST = 690 min
+  const b4Starts = istToUtcDate(tomorrowIst, 690);
+  const b4Ends = istToUtcDate(tomorrowIst, 715);
   const royalBeardServ = createdServicesSalon1.find(s => s.name === 'Royal Beard Styling with Hot Towel')!;
 
   await prisma.booking.create({
@@ -514,27 +515,24 @@ async function main() {
       salonId: salon1.id,
       barberId: barber2.id,
       customerId: customer1.id,
-      token: 3,
-      tokenDate: today,
+      token: 1,
+      tokenDate: tomorrowTokenDate,
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
-      status: BookingStatus.CHECKED_IN,
+      status: BookingStatus.CONFIRMED,
       startsAt: b4Starts,
       endsAt: b4Ends,
       totalRupees: 120,
-      checkedInAt: b4Starts,
       items: {
         create: [{ serviceId: royalBeardServ.id, priceRupees: 120, durationMin: 25 }],
       },
     },
   });
 
-  // Sample Booking 5: Today, CONFIRMED (Barber 3, Customer 2)
-  const b5Starts = new Date(today);
-  b5Starts.setUTCHours(10, 30, 0, 0); // 4:00 PM IST
-  const b5Ends = new Date(b5Starts);
-  b5Ends.setUTCMinutes(b5Ends.getUTCMinutes() + 30);
-
+  // Sample Booking 5: Tomorrow, CANCELLED (Barber 3, Customer 2)
+  // 3:00 PM IST = 900 min
+  const b5Starts = istToUtcDate(tomorrowIst, 900);
+  const b5Ends = istToUtcDate(tomorrowIst, 930);
   const detanServ = createdServicesSalon1.find(s => s.name === 'Detan Face Pack & Clean Up')!;
 
   await prisma.booking.create({
@@ -542,14 +540,16 @@ async function main() {
       salonId: salon1.id,
       barberId: barber3.id,
       customerId: customer2.id,
-      token: 4,
-      tokenDate: today,
+      token: 2,
+      tokenDate: tomorrowTokenDate,
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
-      status: BookingStatus.CONFIRMED,
+      status: BookingStatus.CANCELLED,
       startsAt: b5Starts,
       endsAt: b5Ends,
       totalRupees: 250,
+      cancelledAt: now,
+      cancelReason: 'Customer requested cancellation online',
       items: {
         create: [{ serviceId: detanServ.id, priceRupees: 250, durationMin: 30 }],
       },
