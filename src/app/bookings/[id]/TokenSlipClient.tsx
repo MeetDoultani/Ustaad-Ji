@@ -9,6 +9,8 @@ import TokenSlip from '@/components/ui/TokenSlip';
 import RegisterDiarySlotPicker, { DiaryDateTab } from '@/components/ui/RegisterDiarySlotPicker';
 import { cancelBookingAction, rescheduleBookingAction } from '../actions';
 import { getSlotsAction, SerializedSlot } from '@/app/book/actions';
+import { useLocale, useTranslations } from 'next-intl';
+import { getLocalizedName } from '@/i18n/config';
 
 interface TokenSlipClientProps {
   booking: {
@@ -68,6 +70,10 @@ export default function TokenSlipClient({
   dateTabs,
 }: TokenSlipClientProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('token');
+  const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
   const [isPending, startTransition] = useTransition();
 
   // Cancel Modal state
@@ -95,12 +101,10 @@ export default function TokenSlipClient({
       link.download = `token-slip-${booking.token}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (err) {
-      console.error('Failed to download slip image:', err);
+    } catch {
       window.print();
     }
   };
-
 
   // Fetch slots for reschedule
   const loadSlotsForDate = (dateIst: string) => {
@@ -120,13 +124,13 @@ export default function TokenSlipClient({
         if (res.ok && res.slots) {
           setSlots(res.slots);
         } else {
-          setRescheduleError(res.message || 'Slots load nahi ho sake.');
+          setRescheduleError(res.message || tErrors('generic'));
           setSlots([]);
         }
       })
       .catch(() => {
         setLoadingSlots(false);
-        setRescheduleError('Network error while loading slots.');
+        setRescheduleError(tErrors('generic'));
         setSlots([]);
       });
   };
@@ -150,7 +154,9 @@ export default function TokenSlipClient({
         setShowCancelModal(false);
         router.refresh();
       } else {
-        setCancelError(result.message || 'Cancel karne mein samasya aayi.');
+        const errKey = result.message || 'generic';
+        const translated = (tErrors as unknown as Record<string, string>)[errKey] || result.message || tErrors('generic');
+        setCancelError(translated);
       }
     });
   };
@@ -158,7 +164,7 @@ export default function TokenSlipClient({
   // Perform Reschedule
   const handleConfirmReschedule = () => {
     if (!selectedNewSlotStartsAt) {
-      setRescheduleError('Kripya naya slot chuniye.');
+      setRescheduleError(t('selectNewSlotError'));
       return;
     }
 
@@ -173,13 +179,16 @@ export default function TokenSlipClient({
         setShowRescheduleModal(false);
         router.push(`/bookings/${result.newBookingId}`);
       } else {
-        setRescheduleError(result.message || 'Reschedule fail ho gaya.');
+        const errKey = result.message || 'generic';
+        const translated = (tErrors as unknown as Record<string, string>)[errKey] || result.message || tErrors('generic');
+        setRescheduleError(translated);
       }
     });
   };
 
   const servicesList = booking.items.map((i) => ({
     name: i.service.name,
+    nameHi: i.service.nameHi,
     priceRupees: i.priceRupees,
     durationMin: i.durationMin,
   }));
@@ -194,7 +203,7 @@ export default function TokenSlipClient({
           href="/bookings"
           className="font-body text-xs sm:text-sm text-steel hover:text-ink underline flex items-center gap-1"
         >
-          ← Mere Sabhi Tokens / Back to My Bookings
+          ← {t('backToBookings')}
         </Link>
       </div>
 
@@ -215,19 +224,23 @@ export default function TokenSlipClient({
       />
 
       {/* Cancellation or Reschedule Controls */}
-      <div className="bg-paper border-3 border-ink p-4 shadow-[4px_4px_0px_#2B2118] space-y-4">
+      <div className="bg-paper border-3 border-ink p-4 shadow-[4px_4px_0px_#2B2118] space-y-4 rounded-xl">
         {booking.status === 'CANCELLED' ? (
           <div className="text-center font-body text-sm text-poleRed">
-            <p className="font-bold">Yeh booking cancel kar di gayi hai.</p>
+            <p className="font-bold">{t('cancelledBadge')}</p>
             {booking.cancelReason && (
               <p className="text-xs text-steel mt-0.5">
-                Karan: {booking.cancelReason}
+                {t('reasonPrefix')} {booking.cancelReason}
               </p>
             )}
           </div>
         ) : cutoffPassed ? (
-          <div className="bg-tile/30 border border-tealDeep/40 p-3 text-xs font-body text-tealDeep">
-            ⚠️ <strong>Cancellation Cutoff:</strong> Appointment shuru hone mein 1 ghante se kam bacha hai. Kisi bhi badlaav ke liye kripya salon se seedhe sampark karein: <strong>{booking.salon.phone || 'Salon desk'}</strong>.
+          <div className="bg-tile/30 border border-tealDeep/40 p-3 text-xs font-body text-tealDeep rounded-lg">
+            ⚠️ <strong>{t('cancellationCutoffLabel')}</strong>{' '}
+            {t('cutoffPassedNotice', {
+              minutes: 60,
+              phone: booking.salon.phone || t('salonDesk'),
+            })}
           </div>
         ) : (
           <div className="flex flex-col sm:flex-row gap-3">
@@ -235,9 +248,9 @@ export default function TokenSlipClient({
               <button
                 type="button"
                 onClick={openRescheduleModal}
-                className="flex-1 min-h-[44px] bg-paper border-2 border-ink text-ink font-label font-bold text-sm px-4 py-2.5 shadow-[2px_2px_0px_#2B2118] hover:bg-tile/20 transition-all text-center"
+                className="flex-1 min-h-[44px] bg-paper border-2 border-ink text-ink font-label font-bold text-sm px-4 py-2.5 shadow-[2px_2px_0px_#2B2118] hover:bg-tile/20 transition-all text-center rounded-lg"
               >
-                Reschedule / समय बदलें
+                {t('reschedule')}
               </button>
             )}
 
@@ -245,123 +258,133 @@ export default function TokenSlipClient({
               <button
                 type="button"
                 onClick={() => setShowCancelModal(true)}
-                className="flex-1 min-h-[44px] bg-paper border-2 border-poleRed text-poleRed font-label font-bold text-sm px-4 py-2.5 shadow-[2px_2px_0px_#7A1F2B] hover:bg-poleRed/10 transition-all text-center"
+                className="flex-1 min-h-[44px] bg-paper border-2 border-poleRed text-poleRed font-label font-bold text-sm px-4 py-2.5 shadow-[2px_2px_0px_#C8262F] hover:bg-poleRed/10 transition-all text-center rounded-lg"
               >
-                Cancel Booking / रद्द करें
+                {t('cancelBooking')}
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* CANCEL MODAL */}
+      {/* Cancel Confirmation Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-center justify-center p-4">
-          <div className="bg-paper border-4 border-maroon p-6 max-w-md w-full shadow-[6px_6px_0px_#2B2118] space-y-4">
-            <h3 className="font-sign text-xl text-maroon">
-              Cancel Booking / बुकिंग रद्द करें?
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-ink/70 flex items-center justify-center p-4 backdrop-blur-sm"
+        >
+          <div className="bg-paper border-4 border-maroon p-6 max-w-md w-full shadow-[6px_6px_0px_#2B2118] space-y-4 rounded-2xl">
+            <h3 className="font-sign text-2xl text-maroon">
+              {t('cancelBooking')}
             </h3>
-            <p className="font-body text-xs text-ink/80">
-              Kya aap sach mein Token #{booking.token} cancel karna chahte hain?
+            <p className="font-body text-sm text-ink/80">
+              {t('cancelConfirm')}
             </p>
 
-            {cancelError && (
-              <p className="text-xs font-bold text-poleRed">{cancelError}</p>
-            )}
-
             <div>
-              <label className="font-label text-xs uppercase text-steel block mb-1">
-                Karan / Reason (Optional):
+              <label htmlFor="cancel-reason" className="block font-label text-xs uppercase text-steel mb-1">
+                {t('cancelReasonLabel')}
               </label>
-              <input
-                type="text"
+              <textarea
+                id="cancel-reason"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Jaise: Tabiyat theek nahi, doosra kaam aa gaya"
-                className="w-full bg-paper border-2 border-ink p-2 font-body text-sm focus:outline-none focus:border-maroon"
+                placeholder={t('cancelReasonPlaceholder')}
+                className="w-full border-2 border-ink p-2 text-sm font-body bg-paper focus:border-marigold focus:outline-none rounded-lg"
+                rows={2}
               />
             </div>
+
+            {cancelError && (
+              <div className="p-2 bg-poleRed/10 border border-poleRed text-poleRed text-xs font-body rounded">
+                {cancelError}
+              </div>
+            )}
 
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                disabled={isPending}
                 onClick={() => setShowCancelModal(false)}
-                className="flex-1 min-h-[44px] bg-paper border-2 border-ink text-ink font-label font-bold text-xs"
+                className="flex-1 min-h-[44px] border-2 border-ink bg-paper font-label font-bold text-sm text-ink hover:bg-tile/20 rounded-lg"
               >
-                Nahi, Wapas Jayein
+                {tCommon('cancel')}
               </button>
-
               <button
                 type="button"
                 disabled={isPending}
                 onClick={handleConfirmCancel}
-                className="flex-1 min-h-[44px] bg-poleRed text-chalk border-2 border-ink font-label font-bold text-xs shadow-[2px_2px_0px_#2B2118] hover:bg-poleRed/90"
+                className="flex-1 min-h-[44px] border-2 border-poleRed bg-poleRed text-chalk font-label font-bold text-sm hover:bg-poleRed/90 shadow-[2px_2px_0px_#2B2118] disabled:opacity-60 rounded-lg"
               >
-                {isPending ? 'Cancelling...' : 'Haan, Cancel Karein'}
+                {isPending ? tCommon('loading') : t('cancelBooking')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* RESCHEDULE MODAL / DRAWER */}
+      {/* Reschedule Slot Picker Modal */}
       {showRescheduleModal && (
-        <div className="fixed inset-0 z-50 bg-ink/60 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-paper border-4 border-maroon p-4 sm:p-6 max-w-lg w-full shadow-[6px_6px_0px_#2B2118] space-y-4 my-auto">
-            <div className="flex justify-between items-center border-b-2 border-ink/20 pb-2">
-              <h3 className="font-sign text-lg sm:text-xl text-maroon">
-                Reschedule Slot / नया समय चुनें
-              </h3>
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-ink/75 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto"
+        >
+          <div className="bg-paper border-4 border-maroon p-6 max-w-xl w-full shadow-[6px_6px_0px_#2B2118] space-y-4 my-8 rounded-2xl">
+            <div className="flex items-center justify-between border-b-2 border-ink/20 pb-3">
+              <div>
+                <h3 className="font-sign text-2xl text-maroon">
+                  {t('reschedule')}
+                </h3>
+                <p className="font-body text-xs text-steel">
+                  {booking.barber.displayName} &bull; {getLocalizedName(booking.salon, locale)}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowRescheduleModal(false)}
-                className="font-token text-lg font-bold px-2"
+                className="font-token text-lg text-steel hover:text-ink px-2 py-1"
               >
                 ✕
               </button>
             </div>
 
             {rescheduleError && (
-              <p className="text-xs font-bold text-poleRed bg-poleRed/10 p-2 border border-poleRed">
+              <div className="p-3 bg-poleRed/10 border-2 border-poleRed text-poleRed text-xs font-body rounded-lg">
                 {rescheduleError}
-              </p>
+              </div>
             )}
 
             <RegisterDiarySlotPicker
               dates={dateTabs}
               selectedDateIst={selectedDateIst}
-              onSelectDateIst={loadSlotsForDate}
+              onSelectDateIst={(dateIst) => loadSlotsForDate(dateIst)}
               slots={slots}
               isLoading={loadingSlots}
               selectedSlot={selectedNewSlotStartsAt || undefined}
-              onSelectSlot={(_timeStr, startsAt) => {
-                setSelectedNewSlotStartsAt(startsAt || null);
-              }}
+              onSelectSlot={(_, startsAt) => setSelectedNewSlotStartsAt(startsAt || null)}
             />
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-3 border-t-2 border-ink/20">
               <button
                 type="button"
-                disabled={isPending}
                 onClick={() => setShowRescheduleModal(false)}
-                className="flex-1 min-h-[44px] bg-paper border-2 border-ink text-ink font-label font-bold text-xs"
+                className="flex-1 min-h-[44px] border-2 border-ink bg-paper font-label font-bold text-sm text-ink hover:bg-tile/20 rounded-lg"
               >
-                Cancel
+                {tCommon('cancel')}
               </button>
-
               <button
                 type="button"
                 disabled={isPending || !selectedNewSlotStartsAt}
                 onClick={handleConfirmReschedule}
                 className={clsx(
-                  'flex-1 min-h-[44px] border-2 border-ink font-label font-bold text-xs shadow-[2px_2px_0px_#2B2118]',
+                  'flex-1 min-h-[44px] border-2 border-ink font-label font-bold text-sm shadow-[2px_2px_0px_#2B2118] transition-all rounded-lg',
                   selectedNewSlotStartsAt
                     ? 'bg-marigold text-ink hover:bg-saffron'
                     : 'bg-steel/20 text-steel cursor-not-allowed shadow-none'
                 )}
               >
-                {isPending ? 'Rescheduling...' : 'Naya Time Pakka Karein'}
+                {isPending ? tCommon('loading') : t('confirmReschedule')}
               </button>
             </div>
           </div>

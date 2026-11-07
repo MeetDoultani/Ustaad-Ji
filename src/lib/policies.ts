@@ -243,3 +243,36 @@ export function canRescheduleBooking(
   return false;
 }
 
+/**
+ * Authorization: Access staff dashboard.
+ * Allowed: Active BARBER or OWNER.
+ */
+export function canViewStaffDashboard(user: PolicyUser | null | undefined): boolean {
+  if (!isValidUser(user)) return false;
+  return user.role === Role.BARBER || user.role === Role.OWNER;
+}
+
+/**
+ * Authorization: Create a walk-in booking.
+ * Allowed: A barber for their own profile, an owner for barbers of their own salon.
+ * Denied: Admins (admins do not operate chairs), customers, other staff.
+ */
+export function canCreateWalkIn(
+  user: PolicyUser | null | undefined,
+  barber: PolicyBarber | null | undefined
+): boolean {
+  if (!isValidUser(user) || !barber) return false;
+
+  if (
+    user.role === Role.BARBER &&
+    (user.id === barber.userId || user.id === barber.id)
+  ) {
+    return true;
+  }
+
+  if (user.role === Role.OWNER && user.id === barber.salonOwnerId) {
+    return true;
+  }
+
+  return false;
+}

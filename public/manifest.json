@@ -1,7 +1,7 @@
 {
-  "name": "Indian Salon Booking - अब लाइन में नहीं, स्लॉट में",
-  "short_name": "Salon Booking",
-  "description": "Book appointments at traditional Indian neighbourhood salons and barbers.",
+  "name": "Ustaad-Ji - अब लाइन में नहीं, स्लॉट में",
+  "short_name": "Ustaad-Ji",
+  "description": "Book appointments at traditional Indian neighbourhood salons and ustaad barbers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F6EBD0",

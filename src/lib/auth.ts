@@ -65,6 +65,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } else if (!user.isActive) {
           // Deactivated user: reject login
           return null;
+        } else {
+          // Existing active user: sync NEXT_LOCALE cookie to User.language if valid cookie exists
+          try {
+            const cookieStore = await cookies();
+            const localeCookie = cookieStore.get('NEXT_LOCALE')?.value;
+            if ((localeCookie === 'hi' || localeCookie === 'en') && user.language !== localeCookie) {
+              await db.user.update({
+                where: { id: user.id },
+                data: { language: localeCookie },
+              });
+            }
+          } catch {
+            // Ignored if cookie reading fails
+          }
         }
 
         return {

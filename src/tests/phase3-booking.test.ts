@@ -618,7 +618,7 @@ describe('Phase 3: Real Slot Booking & Policy Tests', () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.code).toBe('INVALID_INPUT');
-        expect(res.message).toContain('15 minute');
+        expect(res.message).toBe('Please pick a time from the list.');
       }
     });
 
@@ -636,7 +636,7 @@ describe('Phase 3: Real Slot Booking & Policy Tests', () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.code).toBe('INVALID_INPUT');
-        expect(res.message).toContain('bahar');
+        expect(res.message).toContain('outside');
       }
     });
 
@@ -671,7 +671,7 @@ describe('Phase 3: Real Slot Booking & Policy Tests', () => {
       expect(futureRes.ok).toBe(false);
       if (!futureRes.ok) {
         expect(futureRes.code).toBe('INVALID_INPUT');
-        expect(futureRes.message).toContain('14 din');
+        expect(futureRes.message).toContain('14 days');
       }
     });
 

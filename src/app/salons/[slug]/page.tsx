@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { getSalonBySlug } from '@/lib/salons';
 import { SignboardHeader, BarberPoleDivider, TileBackground } from '@/components/ui';
 import SalonDetailsClient from './SalonDetailsClient';
+import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocalizedName } from '@/i18n/config';
 
 interface SalonPageProps {
   params: Promise<{
@@ -17,6 +19,10 @@ export default async function SalonDetailPage({ params }: SalonPageProps) {
   if (!salon) {
     notFound();
   }
+
+  const locale = await getLocale();
+  const t = await getTranslations('salonDetails');
+  const localizedSalonName = getLocalizedName(salon, locale);
 
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col pb-20 sm:pb-24">
@@ -33,10 +39,10 @@ export default async function SalonDetailPage({ params }: SalonPageProps) {
         <BarberPoleDivider />
         <TileBackground variant="tile" className="py-8 px-4 text-center">
           <p className="font-sign text-xl text-maroon">
-            {salon.name} • {salon.area}, {salon.city}
+            {localizedSalonName} • {salon.area}, {salon.city}
           </p>
           <p className="font-body text-xs text-ink/70 mt-1">
-            Genuine neighbourhood grooming since 1994. Verified by Indian Salon Booking.
+            {t('verifiedNotice')}
           </p>
         </TileBackground>
       </footer>

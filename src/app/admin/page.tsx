@@ -3,10 +3,12 @@ import { requireRole } from '@/lib/auth-server';
 import { Role } from '@prisma/client';
 import { db } from '@/lib/db';
 import { SignboardHeader, BarberPoleDivider } from '@/components/ui';
+import { getTranslations } from 'next-intl/server';
 import AdminClient from './AdminClient';
 
 export default async function AdminPage() {
   const admin = await requireRole(Role.ADMIN);
+  const t = await getTranslations('admin');
 
   const salons = await db.salon.findMany({
     include: {
@@ -45,13 +47,13 @@ export default async function AdminPage() {
         <div className="border-b-2 border-ink/20 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="font-token text-xs uppercase tracking-wider text-tealDeep bg-tile/40 px-2 py-0.5 border border-tealDeep/40 font-bold">
-              ★ ADMIN CONSOLE ★
+              {t('consoleBadge')}
             </span>
             <h1 className="font-sign text-2xl sm:text-4xl text-maroon mt-1">
-              Admin Sahab Desk / एडमिन डेस्क
+              {t('title')}
             </h1>
             <p className="font-body text-xs sm:text-sm text-steel">
-              Review and verify pending salons and neighbourhood barbers ({admin.phone})
+              {t('subtitle', { phone: admin.phone })}
             </p>
           </div>
         </div>

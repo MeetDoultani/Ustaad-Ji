@@ -10,6 +10,9 @@ import UstaadCard from '@/components/ui/UstaadCard';
 import RegisterDiarySlotPicker, { DiaryDateTab } from '@/components/ui/RegisterDiarySlotPicker';
 import { getSlotsAction, createBookingAction, SerializedSlot } from '../actions';
 import { calculateServicesSummary } from '@/lib/salons';
+import { CANCEL_CUTOFF_MIN } from '@/lib/booking-config';
+import { useLocale, useTranslations } from 'next-intl';
+import { getLocalizedName } from '@/i18n/config';
 
 interface BookFlowClientProps {
   salon: FullSalonDetails;
@@ -31,6 +34,10 @@ export default function BookFlowClient({
   initialSlotStartsAt,
 }: BookFlowClientProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('book');
+  const tCommon = useTranslations('common');
+  const tErrors = useTranslations('errors');
   const [isPending, startTransition] = useTransition();
 
   // Wizard Step: 1 = Services, 2 = Barber, 3 = Slot, 4 = Confirm
@@ -67,6 +74,23 @@ export default function BookFlowClient({
 
   // Selected barber object
   const selectedBarber = salon.barbers.find((b) => b.id === selectedBarberId);
+  const localizedSalonName = getLocalizedName(salon, locale);
+
+  // Synchronize state with URL query parameters so language switching and reloads preserve state
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (selectedServiceIds.length > 0) {
+      params.set('services', selectedServiceIds.join(','));
+    } else {
+      params.delete('services');
+    }
+    if (selectedBarberId) params.set('barber', selectedBarberId);
+    if (selectedDateIst) params.set('date', selectedDateIst);
+    if (selectedSlotStartsAt) params.set('slot', selectedSlotStartsAt);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [selectedServiceIds, selectedBarberId, selectedDateIst, selectedSlotStartsAt]);
 
   // Filter barbers who can perform ALL selected services
   const barberCapabilityMap = React.useMemo(() => {
@@ -112,150 +136,120 @@ export default function BookFlowClient({
         setLoadingSlots(false);
         if (res.ok && res.slots) {
           setSlots(res.slots);
-          // If previous selection is still in newly fetched available slots, keep it
+          // If we had an initialSlotStartsAt, see if we can resolve its timeStr
           if (selectedSlotStartsAt) {
             const found = res.slots.find((s) => s.startsAt === selectedSlotStartsAt);
-            if (found && found.available) {
+            if (found) {
               setSelectedSlotTimeStr(found.timeStr);
-            } else {
-              setSelectedSlotStartsAt(null);
-              setSelectedSlotTimeStr(null);
             }
           }
         } else {
-          setSlotsError(res.message || 'Slots load nahi ho sake.');
-          setSlots([]);
+          const errKey = res.code || res.message;
+          const errMsg = errKey && (tErrors as unknown as Record<string, string>)[errKey]
+            ? (tErrors as unknown as Record<string, string>)[errKey]
+            : (res.message || tErrors('generic'));
+          setSlotsError(errMsg);
         }
       })
       .catch(() => {
         if (!isMounted) return;
         setLoadingSlots(false);
-        setSlotsError('Slots load karte samay network error.');
-        setSlots([]);
+        setSlotsError(tErrors('generic'));
       });
-
 
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBarberId, selectedDateIst, selectedServiceIds]);
-
-
+  }, [salon.slug, selectedBarberId, selectedDateIst, selectedServiceIds, selectedSlotStartsAt, tErrors]);
 
   const toggleService = (serviceId: string) => {
-    setSubmitError(null);
     setSelectedServiceIds((prev) => {
-      if (prev.includes(serviceId)) {
-        return prev.filter((id) => id !== serviceId);
-      }
-      if (prev.length >= 6) {
-        setSubmitError('Ek baar mein maximum 6 services book ki ja sakti hain.');
-        return prev;
-      }
-      return [...prev, serviceId];
+      const next = prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId];
+      // Reset selected slot if service duration changes
+      setSelectedSlotStartsAt(null);
+      setSelectedSlotTimeStr(null);
+      return next;
     });
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = async () => {
     if (!user) {
-      // Redirect to login preserving callbackUrl with all choices
-      const callbackUrl = `/book/${salon.slug}?services=${selectedServiceIds.join(',')}&barber=${selectedBarberId}&date=${selectedDateIst}&slot=${encodeURIComponent(selectedSlotStartsAt || '')}`;
-      router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-      return;
-    }
-
-    if (user.role !== 'CUSTOMER') {
-      setSubmitError('Customer booking ke liye kripya customer account se login karein.');
+      const callbackUrl = encodeURIComponent(
+        `/book/${salon.slug}?services=${selectedServiceIds.join(',')}&barber=${selectedBarberId}&date=${selectedDateIst}&slot=${encodeURIComponent(
+          selectedSlotStartsAt || ''
+        )}`
+      );
+      router.push(`/login?callbackUrl=${callbackUrl}`);
       return;
     }
 
     if (!selectedBarberId || !selectedSlotStartsAt || selectedServiceIds.length === 0) {
-      setSubmitError('Sabhi steps complete karein.');
+      setSubmitError(tErrors('INVALID_INPUT'));
       return;
     }
 
     setSubmitError(null);
 
     startTransition(async () => {
-      const result = await createBookingAction({
+      const res = await createBookingAction({
         salonId: salon.id,
         barberId: selectedBarberId,
         serviceIds: selectedServiceIds,
         startsAtIso: selectedSlotStartsAt,
       });
 
-      if (result.ok && result.bookingId) {
-        router.push(`/bookings/${result.bookingId}`);
+      if (res.ok && res.bookingId) {
+        router.push(`/bookings/${res.bookingId}`);
       } else {
-        setSubmitError(result.message || 'Booking fail ho gayi. Kripya punah koshish karein.');
-        if (result.code === 'SLOT_TAKEN') {
-          setCurrentStep(3); // Send user back to step 3 to choose another slot
-        }
+        const errKey = res.code || res.message || 'generic';
+        const translatedErr = (tErrors as unknown as Record<string, string>)[errKey] || res.message || tErrors('generic');
+        setSubmitError(translatedErr);
       }
     });
   };
 
-  const isStaff = user && user.role !== 'CUSTOMER';
+  const isStaff = user?.role === 'BARBER' || user?.role === 'OWNER';
+
+  // Step Breadcrumb Navigation
+  const steps = [
+    { num: 1, label: t('servicesStep') },
+    { num: 2, label: t('barberStep') },
+    { num: 3, label: t('slotStep') },
+    { num: 4, label: t('confirmStep') },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      {/* Staff Account Warning Notice */}
-      {isStaff && (
-        <div className="bg-paper border-4 border-maroon p-4 shadow-[4px_4px_0px_#7A1F2B]">
-          <p className="font-sign text-lg text-maroon font-bold">
-            ⚠️ Staff Account Notice / स्टाफ अकाउंट सूचना
-          </p>
-          <p className="font-body text-sm text-ink mt-1">
-            Aap <strong>{user.role}</strong> account se logged in hain. Real slot bookings kewal customers ke liye hain. Booking confirm karne ke liye customer account use karein.
-          </p>
-        </div>
-      )}
-
-      {/* 4-Step Vintage Breadcrumbs / Progress Header */}
-      <div className="bg-paper border-3 border-ink p-3 shadow-[4px_4px_0px_#2B2118]">
-        <div className="flex items-center justify-between overflow-x-auto text-xs sm:text-sm font-label font-bold scrollbar-none py-1">
-          {[
-            { step: 1, en: '1. Services', hi: 'सेवाएं' },
-            { step: 2, en: '2. Ustaad', hi: 'कारीगर' },
-            { step: 3, en: '3. Slot', hi: 'समय' },
-            { step: 4, en: '4. Confirm', hi: 'पुष्टि' },
-          ].map((item, index) => {
-            const isCurrent = currentStep === item.step;
-            const isCompleted = currentStep > item.step;
-
+    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 space-y-8">
+      {/* Step Wizard Header */}
+      <div className="bg-paper border-4 border-maroon p-4 sm:p-5 shadow-[4px_4px_0px_#7A1F2B] rounded-xl">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          {steps.map((item, idx) => {
+            const isCurrent = currentStep === item.num;
+            const isCompleted = currentStep > item.num;
             return (
-              <React.Fragment key={item.step}>
-                {index > 0 && (
-                  <span className="text-steel/50 px-2 select-none">→</span>
-                )}
+              <React.Fragment key={item.num}>
+                {idx > 0 && <span className="text-steel hidden sm:inline">→</span>}
                 <button
                   type="button"
                   onClick={() => {
-                    // Only allow navigating backwards or if prerequisite data exists
-                    if (item.step < currentStep) {
-                      setCurrentStep(item.step);
-                    } else if (item.step === 2 && selectedServiceIds.length > 0) {
-                      setCurrentStep(2);
-                    } else if (
-                      item.step === 3 &&
-                      selectedServiceIds.length > 0 &&
-                      selectedBarberId
-                    ) {
-                      setCurrentStep(3);
+                    // Only allow navigating back to previously reached steps
+                    if (item.num <= currentStep) {
+                      setCurrentStep(item.num);
                     }
                   }}
+                  disabled={item.num > currentStep}
                   className={clsx(
-                    'min-h-[44px] px-3 py-1 flex items-center gap-1.5 transition-all whitespace-nowrap border',
+                    'font-label font-bold text-xs sm:text-sm px-3 py-1.5 border-2 transition-all flex items-center gap-1.5 rounded-lg min-h-[44px]',
                     isCurrent
                       ? 'bg-marigold text-ink border-ink shadow-[2px_2px_0px_#2B2118]'
                       : isCompleted
                       ? 'bg-tile text-tealDeep border-tealDeep hover:bg-tile/80'
-                      : 'text-steel border-transparent hover:text-ink'
+                      : 'text-steel border-transparent hover:text-ink cursor-not-allowed opacity-60'
                   )}
                 >
-                  <span>{item.en}</span>
-                  <span className="text-[11px] font-body opacity-80">({item.hi})</span>
+                  <span>{item.label}</span>
                 </button>
               </React.Fragment>
             );
@@ -265,7 +259,7 @@ export default function BookFlowClient({
 
       {/* Error Banner */}
       {submitError && (
-        <div className="bg-poleRed/10 border-2 border-poleRed text-poleRed p-4 font-body text-sm font-bold shadow-[3px_3px_0px_#2B2118]">
+        <div className="bg-poleRed/10 border-2 border-poleRed text-poleRed p-4 font-body text-sm font-bold shadow-[3px_3px_0px_#2B2118] rounded-xl">
           ✕ {submitError}
         </div>
       )}
@@ -276,15 +270,15 @@ export default function BookFlowClient({
           <div className="border-b-2 border-ink/20 pb-3 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
               <h2 className="font-sign text-2xl sm:text-3xl text-maroon">
-                Step 1: Rate Card / सेवाएं चुनें
+                {t('servicesStep')}
               </h2>
-              <p className="font-body text-xs sm:text-sm text-steel">
-                Chuniye aapko kaunsi services karwani hain (Maximum 6 services)
+              <p className="font-body text-xs sm:text-sm text-steel mt-0.5">
+                {t('selectServicesSubtitle')}
               </p>
             </div>
             {selectedServiceIds.length > 0 && (
-              <span className="font-token text-xs bg-marigold text-ink px-2.5 py-1 border border-ink font-bold self-start sm:self-auto">
-                {selectedServiceIds.length} Chuni gayi
+              <span className="font-token text-xs bg-marigold text-ink px-2.5 py-1 border border-ink font-bold self-start sm:self-auto rounded">
+                {t('servicesSelectedCount', { count: selectedServiceIds.length })}
               </span>
             )}
           </div>
@@ -295,11 +289,11 @@ export default function BookFlowClient({
             onToggleService={toggleService}
           />
 
-          {/* Sticky/Bottom Action Bar for Step 1 */}
-          <div className="bg-paper border-4 border-ink p-4 shadow-[4px_4px_0px_#2B2118] flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Action Bar for Step 1 */}
+          <div className="bg-paper border-4 border-ink p-4 shadow-[4px_4px_0px_#2B2118] flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl">
             <div>
               <span className="font-label font-bold text-sm text-steel">
-                Total: {summary.serviceCount} services ({summary.totalDurationMin} mins)
+                {t('totalSummary', { price: summary.totalPriceRupees, duration: summary.totalDurationMin })}
               </span>
               <div className="font-token text-2xl font-bold text-maroon">
                 ₹{summary.totalPriceRupees}
@@ -311,13 +305,13 @@ export default function BookFlowClient({
               disabled={selectedServiceIds.length === 0}
               onClick={() => setCurrentStep(2)}
               className={clsx(
-                'min-h-[44px] w-full sm:w-auto px-6 py-3 font-label font-bold text-base border-2 border-ink shadow-[3px_3px_0px_#2B2118] transition-all',
+                'min-h-[44px] w-full sm:w-auto px-6 py-3 font-label font-bold text-base border-2 border-ink shadow-[3px_3px_0px_#2B2118] transition-all rounded-lg',
                 selectedServiceIds.length > 0
                   ? 'bg-marigold text-ink hover:bg-saffron active:translate-x-0.5 active:translate-y-0.5'
                   : 'bg-steel/20 text-steel cursor-not-allowed shadow-none'
               )}
             >
-              Next: Choose Ustaad / कारीगर चुनें →
+              {t('nextSelectBarber')}
             </button>
           </div>
         </section>
@@ -329,10 +323,10 @@ export default function BookFlowClient({
           <div className="border-b-2 border-ink/20 pb-3 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
               <h2 className="font-sign text-2xl sm:text-3xl text-maroon">
-                Step 2: Choose Your Ustaad / कारीगर चुनें
+                {t('barberStep')}
               </h2>
-              <p className="font-body text-xs sm:text-sm text-steel">
-                Har ustaad apne haath ki safai ke liye mashhoor hai. Apna pasandeeda ustaad chuniye.
+              <p className="font-body text-xs sm:text-sm text-steel mt-0.5">
+                {t('selectBarberSubtitle')}
               </p>
             </div>
           </div>
@@ -352,8 +346,8 @@ export default function BookFlowClient({
                   />
                   {!canDoAll && (
                     <div className="mt-2 text-center">
-                      <span className="font-label text-xs bg-paper border border-poleRed text-poleRed px-2 py-0.5">
-                        Kuch chuni services yeh ustaad nahi karte
+                      <span className="font-label text-xs bg-paper border border-poleRed text-poleRed px-2 py-0.5 rounded">
+                        {t('barberMissingServices')}
                       </span>
                     </div>
                   )}
@@ -363,13 +357,13 @@ export default function BookFlowClient({
           </div>
 
           {/* Action Bar for Step 2 */}
-          <div className="bg-paper border-4 border-ink p-4 shadow-[4px_4px_0px_#2B2118] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-paper border-4 border-ink p-4 shadow-[4px_4px_0px_#2B2118] flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="min-h-[44px] px-5 py-2.5 font-label font-bold text-sm border-2 border-ink bg-paper text-ink shadow-[2px_2px_0px_#2B2118] hover:bg-tile/20"
+              className="min-h-[44px] px-5 py-2.5 font-label font-bold text-sm border-2 border-ink bg-paper text-ink shadow-[2px_2px_0px_#2B2118] hover:bg-tile/20 rounded-lg"
             >
-              ← Back to Services
+              {t('backToServices')}
             </button>
 
             <button
@@ -377,13 +371,13 @@ export default function BookFlowClient({
               disabled={!selectedBarberId || !barberCapabilityMap.get(selectedBarberId)}
               onClick={() => setCurrentStep(3)}
               className={clsx(
-                'min-h-[44px] w-full sm:w-auto px-6 py-3 font-label font-bold text-base border-2 border-ink shadow-[3px_3px_0px_#2B2118] transition-all',
+                'min-h-[44px] w-full sm:w-auto px-6 py-3 font-label font-bold text-base border-2 border-ink shadow-[3px_3px_0px_#2B2118] transition-all rounded-lg',
                 selectedBarberId && barberCapabilityMap.get(selectedBarberId)
                   ? 'bg-marigold text-ink hover:bg-saffron active:translate-x-0.5 active:translate-y-0.5'
                   : 'bg-steel/20 text-steel cursor-not-allowed shadow-none'
               )}
             >
-              Next: Choose Slot / समय चुनें →
+              {t('nextSelectSlot')}
             </button>
           </div>
         </section>
@@ -395,21 +389,21 @@ export default function BookFlowClient({
           <div className="border-b-2 border-ink/20 pb-3 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
               <h2 className="font-sign text-2xl sm:text-3xl text-maroon">
-                Step 3: Appointment Diary / समय तय करें
+                {t('slotStep')}
               </h2>
-              <p className="font-body text-xs sm:text-sm text-steel">
-                Ustaad {selectedBarber?.displayName} ki register diary se available slot chuniye
+              <p className="font-body text-xs sm:text-sm text-steel mt-0.5">
+                {selectedBarber?.displayName} &bull; {t('appointmentDiaryTitle')}
               </p>
             </div>
             {selectedSlotTimeStr && (
-              <span className="font-token text-xs bg-marigold text-ink px-2.5 py-1 border border-ink font-bold self-start sm:self-auto">
-                Chuna: {selectedSlotTimeStr}
+              <span className="font-token text-xs bg-marigold text-ink px-2.5 py-1 border border-ink font-bold self-start sm:self-auto rounded">
+                {t('selectedTimePrefix', { time: selectedSlotTimeStr })}
               </span>
             )}
           </div>
 
           {slotsError && (
-            <div className="bg-poleRed/10 border-2 border-poleRed text-poleRed p-3 font-body text-xs">
+            <div className="bg-poleRed/10 border-2 border-poleRed text-poleRed p-3 font-body text-xs rounded-lg">
               {slotsError}
             </div>
           )}
@@ -432,13 +426,13 @@ export default function BookFlowClient({
           />
 
           {/* Action Bar for Step 3 */}
-          <div className="bg-paper border-4 border-ink p-4 shadow-[4px_4px_0px_#2B2118] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-paper border-4 border-ink p-4 shadow-[4px_4px_0px_#2B2118] flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl">
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
-              className="min-h-[44px] px-5 py-2.5 font-label font-bold text-sm border-2 border-ink bg-paper text-ink shadow-[2px_2px_0px_#2B2118] hover:bg-tile/20"
+              className="min-h-[44px] px-5 py-2.5 font-label font-bold text-sm border-2 border-ink bg-paper text-ink shadow-[2px_2px_0px_#2B2118] hover:bg-tile/20 rounded-lg"
             >
-              ← Back to Ustaad
+              {t('backToBarber')}
             </button>
 
             <button
@@ -446,45 +440,40 @@ export default function BookFlowClient({
               disabled={!selectedSlotStartsAt}
               onClick={() => setCurrentStep(4)}
               className={clsx(
-                'min-h-[44px] w-full sm:w-auto px-6 py-3 font-label font-bold text-base border-2 border-ink shadow-[3px_3px_0px_#2B2118] transition-all',
+                'min-h-[44px] w-full sm:w-auto px-6 py-3 font-label font-bold text-base border-2 border-ink shadow-[3px_3px_0px_#2B2118] transition-all rounded-lg',
                 selectedSlotStartsAt
                   ? 'bg-marigold text-ink hover:bg-saffron active:translate-x-0.5 active:translate-y-0.5'
                   : 'bg-steel/20 text-steel cursor-not-allowed shadow-none'
               )}
             >
-              Next: Review & Confirm / पुष्टि करें →
+              {t('nextReviewBooking')}
             </button>
           </div>
         </section>
       )}
 
-      {/* STEP 4: Review & Confirmation Parchment Slip */}
+      {/* STEP 4: Review & Confirmation Slip */}
       {currentStep === 4 && (
         <section className="space-y-6 max-w-2xl mx-auto">
           <div className="border-b-2 border-ink/20 pb-3">
             <h2 className="font-sign text-2xl sm:text-3xl text-maroon text-center">
-              Step 4: Booking Summary / टोकन पर्ची की समीक्षा
+              {t('confirmStep')}
             </h2>
-            <p className="font-body text-xs sm:text-sm text-steel text-center">
-              Kripya sabhi details dekh kar booking pakki karein
+            <p className="font-body text-xs sm:text-sm text-steel text-center mt-0.5">
+              {t('reviewSubtitle')}
             </p>
           </div>
 
           {/* Authentic Bill / Token Slip Preview */}
-          <div className="bg-paper border-4 border-ink p-6 sm:p-8 shadow-[6px_6px_0px_#2B2118] space-y-6 relative">
+          <div className="bg-paper border-4 border-ink p-6 sm:p-8 shadow-[6px_6px_0px_#2B2118] space-y-6 relative rounded-2xl">
             {/* Top Barber Pole Ribbon */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(45deg,#7A1F2B,#7A1F2B_10px,#FAF5E8_10px,#FAF5E8_20px,#0F5E57_20px,#0F5E57_30px,#FAF5E8_30px,#FAF5E8_40px)]" />
+            <div className="absolute top-0 left-0 right-0 h-2 bg-[repeating-linear-gradient(45deg,#7A1F2B,#7A1F2B_10px,#FAF5E8_10px,#FAF5E8_20px,#0F5E57_20px,#0F5E57_30px,#FAF5E8_30px,#FAF5E8_40px)] rounded-t-xl" />
 
             {/* Header info */}
             <div className="text-center border-b-2 border-dashed border-ink/30 pb-4 pt-2">
               <h3 className="font-sign text-2xl sm:text-3xl text-maroon font-bold">
-                {salon.name}
+                {localizedSalonName}
               </h3>
-              {salon.nameHi && (
-                <p className="font-sign text-base text-tealDeep mt-0.5">
-                  {salon.nameHi}
-                </p>
-              )}
               <p className="font-body text-xs text-steel mt-1">
                 {salon.addressLine}, {salon.area}, {salon.city} - {salon.pincode}
               </p>
@@ -494,7 +483,7 @@ export default function BookFlowClient({
             <div className="grid grid-cols-2 gap-4 border-b-2 border-dashed border-ink/30 pb-4 font-body text-sm">
               <div>
                 <span className="font-label text-xs uppercase text-steel block">
-                  Ustaad / कारीगर:
+                  {t('barberField')}
                 </span>
                 <span className="font-bold text-ink text-base">
                   {selectedBarber?.displayName}
@@ -502,15 +491,15 @@ export default function BookFlowClient({
               </div>
               <div>
                 <span className="font-label text-xs uppercase text-steel block">
-                  Date / तारीख:
+                  {t('dateField')}
                 </span>
-                <span className="font-bold text-ink text-base">
+                <span className="font-token font-bold text-ink text-base">
                   {selectedDateIst}
                 </span>
               </div>
               <div>
                 <span className="font-label text-xs uppercase text-steel block">
-                  Time / समय:
+                  {t('timeField')}
                 </span>
                 <span className="font-token text-base font-bold text-maroon">
                   {selectedSlotTimeStr || 'Selected Time'}
@@ -518,10 +507,10 @@ export default function BookFlowClient({
               </div>
               <div>
                 <span className="font-label text-xs uppercase text-steel block">
-                  Total Duration:
+                  {t('durationField')}
                 </span>
                 <span className="font-token text-base font-bold text-ink">
-                  {summary.totalDurationMin} mins
+                  {summary.totalDurationMin} {tCommon('mins')}
                 </span>
               </div>
             </div>
@@ -529,7 +518,7 @@ export default function BookFlowClient({
             {/* Selected Services Breakdown */}
             <div className="space-y-2 border-b-2 border-dashed border-ink/30 pb-4">
               <span className="font-label text-xs uppercase text-steel block mb-1">
-                Selected Services / सेवाएं:
+                {t('servicesField')}
               </span>
               {summary.selectedServices.map((service) => (
                 <div
@@ -537,8 +526,8 @@ export default function BookFlowClient({
                   className="flex items-center justify-between text-sm font-body"
                 >
                   <span className="text-ink">
-                    {service.name}{' '}
-                    <span className="text-xs text-steel">({service.durationMin}m)</span>
+                    {getLocalizedName(service, locale)}{' '}
+                    <span className="text-xs text-steel font-token">({service.durationMin}m)</span>
                   </span>
                   <span className="font-token font-bold text-ink">
                     ₹{service.priceRupees}
@@ -550,36 +539,37 @@ export default function BookFlowClient({
             {/* Grand Total */}
             <div className="flex items-baseline justify-between pt-1">
               <span className="font-label font-bold text-base text-ink">
-                Grand Total / कुल राशि:
+                {t('totalAmountField')}
               </span>
               <span className="font-token text-3xl font-bold text-maroon">
                 ₹{summary.totalPriceRupees}
               </span>
             </div>
 
-            {/* Free Cancellation Cutoff Notice */}
-            <div className="bg-tile/30 border border-tealDeep/40 p-3 text-xs font-body text-tealDeep">
-              ℹ️ <strong>Cancellation Policy:</strong> Appointment shuru hone ke 1 ghante pehle tak muft cancellation uplabdh hai. Uske baad cancel nahi kiya ja sakta.
+            {/* Free Cancellation Notice */}
+            <div className="bg-tile/30 border border-tealDeep/40 p-3 text-xs font-body text-tealDeep rounded-lg">
+              ℹ️ <strong>{t('cancellationPolicyTitle')}</strong>{' '}
+              {t('cancellationPolicyDesc', { minutes: CANCEL_CUTOFF_MIN })}
             </div>
 
             {/* Confirmation Action Button or Login Notice */}
             <div className="pt-2">
               {!user ? (
                 <div className="space-y-3 text-center">
-                  <div className="p-3 bg-marigold/20 border-2 border-dashed border-ink text-xs font-body text-ink">
-                    Booking pakki karne ke liye apna mobile number verify karein.
+                  <div className="p-3 bg-marigold/20 border-2 border-dashed border-ink text-xs font-body text-ink rounded-lg">
+                    {t('loginPrompt')}
                   </div>
                   <button
                     type="button"
                     onClick={handleConfirmBooking}
-                    className="w-full min-h-[48px] bg-marigold text-ink font-label font-bold text-base border-2 border-ink shadow-[4px_4px_0px_#2B2118] hover:bg-saffron active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                    className="w-full min-h-[48px] bg-marigold text-ink font-label font-bold text-base border-2 border-ink shadow-[4px_4px_0px_#2B2118] hover:bg-saffron active:translate-x-0.5 active:translate-y-0.5 transition-all rounded-lg"
                   >
-                    Login with Phone to Confirm / फोन से लॉगिन करें →
+                    {t('loginWithPhone')}
                   </button>
                 </div>
               ) : isStaff ? (
-                <div className="text-center p-3 border-2 border-maroon bg-paper text-maroon font-body text-sm font-bold">
-                  Staff account booking nahi bana sakta. Kripya customer account se login karein.
+                <div className="text-center p-3 border-2 border-maroon bg-paper text-maroon font-body text-sm font-bold rounded-lg">
+                  {t('staffCannotBook')}
                 </div>
               ) : (
                 <button
@@ -587,7 +577,7 @@ export default function BookFlowClient({
                   disabled={isPending}
                   onClick={handleConfirmBooking}
                   className={clsx(
-                    'w-full min-h-[48px] bg-marigold text-ink font-label font-bold text-lg border-2 border-ink shadow-[4px_4px_0px_#2B2118] transition-all flex items-center justify-center gap-2',
+                    'w-full min-h-[48px] bg-marigold text-ink font-label font-bold text-lg border-2 border-ink shadow-[4px_4px_0px_#2B2118] transition-all flex items-center justify-center gap-2 rounded-lg',
                     isPending
                       ? 'opacity-70 cursor-wait'
                       : 'hover:bg-saffron active:translate-x-0.5 active:translate-y-0.5'
@@ -596,10 +586,10 @@ export default function BookFlowClient({
                   {isPending ? (
                     <>
                       <div className="w-5 h-5 border-3 border-ink border-t-transparent rounded-full animate-spin" />
-                      <span>Token Ban Raha Hai... / टोकन बन रहा है...</span>
+                      <span>{t('processing')}</span>
                     </>
                   ) : (
-                    <span>Pakka Karein / पक्का करें →</span>
+                    <span>{t('confirmButton')} →</span>
                   )}
                 </button>
               )}
@@ -612,7 +602,7 @@ export default function BookFlowClient({
                 onClick={() => setCurrentStep(3)}
                 className="font-body text-xs text-steel underline hover:text-ink"
               >
-                ← Change Slot or Ustaad
+                {t('changeSlotOrBarber')}
               </button>
             </div>
           </div>

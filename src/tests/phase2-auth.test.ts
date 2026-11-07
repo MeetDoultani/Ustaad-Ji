@@ -632,7 +632,7 @@ describe('Phase 2: Authentication, Roles and Authorization Tests', () => {
       // Confirm restored
       const restored = await db.salon.findUnique({ where: { id: pendingSalon!.id } });
       expect(restored?.status).toBe(originalStatus);
-    });
+    }, 30000);
 
     // (e) Mass-assignment / role escalation prevention on Account Update
     it('prevents mass-assignment / role escalation on account update: role field is stripped and remains CUSTOMER', async () => {

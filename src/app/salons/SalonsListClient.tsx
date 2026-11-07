@@ -6,6 +6,8 @@ import { PublicSalonListItem } from '@/lib/salons';
 import { FilterChip } from '@/components/ui';
 import { ServiceCategory } from '@prisma/client';
 import { clsx } from 'clsx';
+import { useLocale, useTranslations } from 'next-intl';
+import { getLocalizedName } from '@/i18n/config';
 
 interface SalonsListClientProps {
   initialSalons: PublicSalonListItem[];
@@ -22,6 +24,11 @@ export default function SalonsListClient({
   initialHomeVisit = false,
   initialOpenNow = false,
 }: SalonsListClientProps) {
+  const locale = useLocale();
+  const t = useTranslations('salons');
+  const tCommon = useTranslations('common');
+  const tCat = useTranslations('categories');
+
   const [query, setQuery] = useState(initialQuery);
   const [selectedCat, setSelectedCat] = useState<ServiceCategory | null>(
     initialCat || null
@@ -77,11 +84,11 @@ export default function SalonsListClient({
   return (
     <div className="space-y-6">
       {/* Search Bar + Filter Chips Strip */}
-      <div className="bg-paper border-4 border-maroon p-4 sm:p-5 shadow-[4px_4px_0px_#7A1F2B]">
+      <div className="bg-paper border-4 border-maroon p-4 sm:p-5 shadow-[4px_4px_0px_#7A1F2B] rounded-xl">
         {/* Search Input */}
         <div className="mb-4">
           <label htmlFor="salon-search" className="block font-label font-bold text-sm text-ink mb-1">
-            Search Parlour or Area / नाम या इलाका खोजें:
+            {t('searchPlaceholder')}
           </label>
           <div className="relative">
             <input
@@ -89,37 +96,35 @@ export default function SalonsListClient({
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. Sharma Ji, Indiranagar, Bengaluru..."
-              className="w-full min-h-[44px] px-4 py-2.5 bg-paper border-2 border-ink text-ink font-body placeholder:text-steel focus:border-marigold focus:outline-none"
+              placeholder={t('searchHelp')}
+              className="w-full min-h-[44px] px-4 py-2.5 bg-paper border-2 border-ink text-ink font-body placeholder:text-steel focus:border-marigold focus:outline-none rounded-lg"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 font-token text-xs text-steel hover:text-ink px-2 py-1"
-                aria-label="Clear search text"
+                aria-label={t('clearSearch')}
               >
-                ✕ Clear
+                ✕ {tCommon('cancel')}
               </button>
             )}
           </div>
         </div>
 
-        {/* Filter Chips Bar */}
+        {/* Filter Chips Bar: Single localized labels */}
         <div>
-          <span className="block font-label text-xs uppercase tracking-wider text-steel mb-2">
-            Filter by Service / सेवाएं चुनें:
+          <span className="block font-label text-xs uppercase tracking-normal text-steel mb-2">
+            {t('filterByService')}
           </span>
           <div className="flex flex-wrap gap-2">
             <FilterChip
-              label="All"
-              labelHi="सभी"
+              label={t('allFilter')}
               active={selectedCat === null && !homeVisitOnly && !openNowOnly}
               onClick={clearAllFilters}
             />
             <FilterChip
-              label="Hair"
-              labelHi="बाल"
+              label={tCat('HAIR')}
               active={selectedCat === ServiceCategory.HAIR}
               onClick={() =>
                 setSelectedCat(
@@ -128,8 +133,7 @@ export default function SalonsListClient({
               }
             />
             <FilterChip
-              label="Beard"
-              labelHi="दाढ़ी"
+              label={tCat('BEARD')}
               active={selectedCat === ServiceCategory.BEARD}
               onClick={() =>
                 setSelectedCat(
@@ -138,14 +142,12 @@ export default function SalonsListClient({
               }
             />
             <FilterChip
-              label="Home Visit"
-              labelHi="घर पर"
+              label={t('homeVisitFilter')}
               active={homeVisitOnly}
               onClick={() => setHomeVisitOnly(!homeVisitOnly)}
             />
             <FilterChip
-              label="Open Now"
-              labelHi="अभी खुला है"
+              label={t('openNowFilter')}
               active={openNowOnly}
               onClick={() => setOpenNowOnly(!openNowOnly)}
             />
@@ -156,105 +158,98 @@ export default function SalonsListClient({
       {/* Salons List */}
       {filteredSalons.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSalons.map((salon) => (
-            <div
-              key={salon.id}
-              className="bg-paper border-4 border-maroon rounded-t-[32px] rounded-b-md p-5 shadow-[4px_4px_0px_#7A1F2B] flex flex-col justify-between"
-            >
-              <div>
-                {/* Mirror Top Badge & Salon Title */}
-                <div className="border-b-2 border-dashed border-marigold/70 pb-3 mb-3 text-center">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className={clsx(
-                        'font-token text-[10px] font-bold px-2 py-0.5 border border-ink',
-                        salon.isOpenNow
-                          ? 'bg-tile text-tealDeep'
-                          : 'bg-paper text-poleRed'
-                      )}
-                    >
-                      {salon.isOpenNow ? '● OPEN NOW' : '○ CLOSED'}
-                    </span>
+          {filteredSalons.map((salon) => {
+            const localizedSalonName = getLocalizedName(salon, locale);
 
-                    {/* Waiting Badge */}
-                    <span className="font-token text-[10px] font-bold bg-ink text-marigold px-2 py-0.5">
-                      Waiting: ~25 min
-                    </span>
-                  </div>
-
-                  <h2 className="font-sign text-2xl text-maroon mt-1 leading-tight">
-                    {salon.name}
-                  </h2>
-                  {salon.nameHi && (
-                    <p className="font-body text-xs text-steel">
-                      ({salon.nameHi})
-                    </p>
-                  )}
-                </div>
-
-                <p className="font-body text-xs sm:text-sm text-ink/80 mb-4 line-clamp-2">
-                  {salon.description}
-                </p>
-
-                {/* Info strip */}
-                <div className="space-y-1.5 font-body text-xs text-ink/80 mb-4 bg-tile/15 p-3 border border-ink/20">
-                  <div className="flex items-start gap-1">
-                    <span className="font-bold">📍 Address:</span>
-                    <span>
-                      {salon.addressLine}, {salon.area}, {salon.city}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-1 border-t border-ink/10">
-                    <span>
-                      <span className="font-bold">Ustaads:</span> {salon.barbers.length} verified
-                    </span>
-                    <span className="font-token font-bold text-tealDeep">
-                      ★ {salon.averageRating}
-                    </span>
-                  </div>
-                  {salon.offersHomeVisit && (
-                    <div className="text-tealDeep font-bold text-[11px] pt-0.5">
-                      ✓ Home visits available in {salon.homeVisitRadiusKm ?? 5} km
+            return (
+              <div
+                key={salon.id}
+                className="bg-paper border-4 border-maroon rounded-t-[32px] rounded-b-md p-5 shadow-[4px_4px_0px_#7A1F2B] flex flex-col justify-between"
+              >
+                <div>
+                  {/* Mirror Top Badge & Salon Title */}
+                  <div className="border-b-2 border-dashed border-marigold/70 pb-3 mb-3 text-center">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span
+                        className={clsx(
+                          'font-token text-[10px] font-bold px-2 py-0.5 border border-ink',
+                          salon.isOpenNow
+                            ? 'bg-tile text-tealDeep'
+                            : 'bg-paper text-poleRed'
+                        )}
+                      >
+                        {salon.isOpenNow ? `● ${t('openBadge')}` : `○ ${t('closedBadge')}`}
+                      </span>
                     </div>
-                  )}
+
+                    <h2 className="font-sign text-2xl text-maroon mt-1 leading-tight">
+                      {localizedSalonName}
+                    </h2>
+                  </div>
+
+                  <p className="font-body text-xs sm:text-sm text-ink/80 mb-4 line-clamp-2">
+                    {salon.description}
+                  </p>
+
+                  {/* Info strip */}
+                  <div className="space-y-1.5 font-body text-xs text-ink/80 mb-4 bg-tile/15 p-3 border border-ink/20">
+                    <div className="flex items-start gap-1">
+                      <span className="font-bold">📍 {tCommon('address')}:</span>
+                      <span>
+                        {salon.addressLine}, {salon.area}, {salon.city}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t border-ink/10">
+                      <span>
+                        <span className="font-bold">{t('barbersCountLabel')}</span> {salon.barbers.length}
+                      </span>
+                      <span className="font-token font-bold text-tealDeep">
+                        ★ {salon.averageRating}
+                      </span>
+                    </div>
+                    {salon.offersHomeVisit && (
+                      <div className="text-tealDeep font-bold text-[11px] pt-0.5">
+                        {t('homeVisitInfo', { radius: salon.homeVisitRadiusKm ?? 5 })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bottom Price & Action */}
+                <div className="pt-3 border-t border-ink/20 flex items-center justify-between gap-3">
+                  <div className="flex flex-col">
+                    <span className="font-body text-[11px] text-steel">
+                      {t('startsFrom')}
+                    </span>
+                    <span className="font-token text-xl font-bold text-maroon">
+                      ₹{salon.minPrice}
+                    </span>
+                  </div>
+
+                  <Link
+                    href={`/salons/${salon.slug}`}
+                    className="min-h-[44px] bg-marigold text-ink font-label font-bold text-xs uppercase px-4 py-2 border-2 border-ink shadow-[2px_2px_0px_#2B2118] flex items-center justify-center hover:bg-saffron transition-all rounded-md"
+                  >
+                    {t('viewRateCard')} →
+                  </Link>
                 </div>
               </div>
-
-              {/* Bottom Price & Action */}
-              <div className="pt-3 border-t border-ink/20 flex items-center justify-between gap-3">
-                <div className="flex flex-col">
-                  <span className="font-body text-[11px] text-steel">From / शुरुआत</span>
-                  <span className="font-token text-xl font-bold text-maroon">
-                    ₹{salon.minPrice}
-                  </span>
-                </div>
-
-                <Link
-                  href={`/salons/${salon.slug}`}
-                  className="min-h-[44px] bg-marigold text-ink font-label font-bold text-xs uppercase px-4 py-2 border-2 border-ink shadow-[2px_2px_0px_#2B2118] flex items-center justify-center hover:bg-saffron transition-all"
-                >
-                  View Rate Card / रेट देखें →
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
-        /* Hinglish Empty State */
-        <div className="border-4 border-dashed border-maroon bg-paper p-8 sm:p-12 text-center max-w-xl mx-auto shadow-[4px_4px_0px_#7A1F2B]">
+        /* Single Language Empty State */
+        <div className="border-4 border-dashed border-maroon bg-paper p-8 sm:p-12 text-center max-w-xl mx-auto shadow-[4px_4px_0px_#7A1F2B] rounded-2xl">
           <div className="font-token text-5xl text-maroon mb-3">✂</div>
-          <h3 className="font-sign text-2xl text-maroon mb-1">
-            Koi salon nahi mila. Doosra search try karein?
+          <h3 className="font-sign text-2xl text-maroon mb-2">
+            {t('noSalonsFound')}
           </h3>
-          <p className="font-body text-base text-steel mb-6">
-            कोई सैलून नहीं मिला। दूसरा शब्द खोजकर देखें।
-          </p>
           <button
             type="button"
             onClick={clearAllFilters}
-            className="border-2 border-ink bg-marigold px-6 py-3 font-label font-bold text-ink min-h-[44px] shadow-[3px_3px_0px_#2B2118] active:translate-x-0.5 active:translate-y-0.5"
+            className="border-2 border-ink bg-marigold px-6 py-3 font-label font-bold text-ink min-h-[44px] shadow-[3px_3px_0px_#2B2118] active:translate-x-0.5 active:translate-y-0.5 rounded-lg mt-3"
           >
-            Sare Filter Hatayein / Clear Filters
+            {t('clearAllFilters')}
           </button>
         </div>
       )}

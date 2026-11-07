@@ -1,5 +1,5 @@
 /**
- * Time utilities for Indian Salon Booking.
+ * Time utilities for Ustaad-Ji.
  * Database stores UTC (timestamptz), while all salon business logic
  * and daily hours operate in Indian Standard Time (IST / Asia/Kolkata, UTC+05:30).
  *
@@ -127,11 +127,11 @@ export function formatIstTime(date: Date): string {
 /**
  * Format a date as a localised IST string in English or Hindi.
  * Example (EN): "Thu, 5 Nov" or "Thu, 5 Nov 2026"
- * Example (HI): "गुरु, 5 नवं"
+ * Localises automatically using Intl.DateTimeFormat (hi-IN / en-IN)
  */
 export function formatIstDate(
   dateOrDateIst: Date | string,
-  locale: 'en' | 'hi' = 'en',
+  locale: string = 'en',
   options?: Intl.DateTimeFormatOptions
 ): string {
   const utcDate =

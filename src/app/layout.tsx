@@ -33,14 +33,30 @@ const specialElite = Special_Elite({
   display: 'swap',
 });
 
+import { cookies } from 'next/headers';
+import LanguagePickerOverlay from '@/components/ui/LanguagePickerOverlay';
+
 export const metadata: Metadata = {
-  title: 'Indian Salon Booking | अब लाइन में नहीं, स्लॉट में',
-  description: 'Book traditional neighbourhood salons and barbers without walk-in waiting. Real price boards, appointment diary, and digital tokens.',
+  title: {
+    default: 'Ustaad-Ji | No more waiting in line. Book your slot.',
+    template: '%s | Ustaad-Ji',
+  },
+  description: 'Book traditional neighbourhood salons and ustaad barbers without waiting in queue. Authentic rate cards, appointment diary, and digital tokens.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Salon Booking',
+    title: 'Ustaad-Ji',
+  },
+  openGraph: {
+    title: 'Ustaad-Ji',
+    description: 'No more waiting in line. Book your slot.',
+    siteName: 'Ustaad-Ji',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Ustaad-Ji',
+    description: 'No more waiting in line. Book your slot.',
   },
 };
 
@@ -58,6 +74,8 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const cookieStore = await cookies();
+  const hasLocaleCookie = Boolean(cookieStore.get('NEXT_LOCALE')?.value);
 
   return (
     <html
@@ -67,6 +85,7 @@ export default async function RootLayout({
       <body className="bg-paper text-ink font-body min-h-screen">
         <AuthProvider>
           <NextIntlClientProvider messages={messages}>
+            <LanguagePickerOverlay initialHasCookie={hasLocaleCookie} />
             {children}
           </NextIntlClientProvider>
         </AuthProvider>

@@ -4,6 +4,8 @@ import { getSalonBySlug } from '@/lib/salons';
 import { getCurrentUser } from '@/lib/auth-server';
 import { getNextIstDates, formatIstDate } from '@/lib/time';
 import { SignboardHeader, BarberPoleDivider, TileBackground } from '@/components/ui';
+import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocalizedName } from '@/i18n/config';
 import BookFlowClient from './BookFlowClient';
 
 interface BookPageProps {
@@ -28,6 +30,9 @@ export default async function BookSalonPage({ params, searchParams }: BookPagePr
   }
 
   const currentUser = await getCurrentUser();
+  const t = await getTranslations('book');
+  const tCommon = await getTranslations('common');
+  const locale = await getLocale();
 
   // Generate next 14 IST calendar date tabs
   const now = new Date();
@@ -45,11 +50,11 @@ export default async function BookSalonPage({ params, searchParams }: BookPagePr
     });
 
     if (idx === 0) {
-      labelEn = 'Today';
-      labelHi = 'आज';
+      labelEn = tCommon('today');
+      labelHi = tCommon('today');
     } else if (idx === 1) {
-      labelEn = 'Tomorrow';
-      labelHi = 'कल';
+      labelEn = tCommon('tomorrow');
+      labelHi = tCommon('tomorrow');
     }
 
     return {
@@ -65,8 +70,8 @@ export default async function BookSalonPage({ params, searchParams }: BookPagePr
     <div className="min-h-screen bg-paper text-ink flex flex-col pb-20">
       {/* Signboard Header */}
       <SignboardHeader
-        salonName={`Book: ${salon.name}`}
-        salonNameHi={salon.nameHi ? `बुकिंग: ${salon.nameHi}` : undefined}
+        salonName={`${tCommon('bookingPrefix')}: ${salon.name}`}
+        salonNameHi={salon.nameHi ? `${tCommon('bookingPrefix')}: ${salon.nameHi}` : undefined}
       />
 
       <main className="flex-1">
@@ -86,10 +91,10 @@ export default async function BookSalonPage({ params, searchParams }: BookPagePr
         <BarberPoleDivider />
         <TileBackground variant="tile" className="py-6 px-4 text-center">
           <p className="font-sign text-lg text-maroon">
-            {salon.name} • {salon.area}, {salon.city}
+            {getLocalizedName(salon, locale)} • {salon.area}, {salon.city}
           </p>
           <p className="font-body text-xs text-ink/70 mt-1">
-            Real time slot booking with authentic token slips. Verified by Indian Salon Booking.
+            {t('verifiedBadge')}
           </p>
         </TileBackground>
       </footer>

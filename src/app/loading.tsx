@@ -1,6 +1,21 @@
 import React from 'react';
+import { getTranslations } from 'next-intl/server';
 
-export default function Loading() {
+export default async function Loading() {
+  let t;
+  try {
+    t = await getTranslations('loading');
+  } catch {
+    t = (key: string) => {
+      const fallback: Record<string, string> = {
+        title: 'Getting Your Chair Ready...',
+        subtitle: 'Preparing your neighbourhood appointment register...',
+        subtext: 'Please wait a moment while we load your details.',
+      };
+      return fallback[key] || key;
+    };
+  }
+
   return (
     <main className="min-h-screen bg-paper flex flex-col items-center justify-center p-6 text-center">
       {/* Barber Pole vertical loader */}
@@ -18,15 +33,15 @@ export default function Loading() {
         />
       </div>
 
-      <h2 className="font-sign text-2xl sm:text-3xl text-maroon mb-1">
-        Aapki Kursi Taiyaar Ho Rahi Hai...
+      <h2 className="font-sign text-2xl sm:text-3xl text-maroon mb-2">
+        {t('title')}
       </h2>
       <p className="font-body text-base text-steel mb-4">
-        आपकी कुर्सी तैयार हो रही है... (Loading)
+        {t('subtitle')}
       </p>
 
       <div className="font-token text-xs bg-tile/30 border border-ink/40 px-3 py-1.5 text-ink">
-        Shaving cream ghul rahi hai... Kripya intezaar karein.
+        {t('subtext')}
       </div>
     </main>
   );

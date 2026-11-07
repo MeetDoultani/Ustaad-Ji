@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { useLocale, useTranslations } from 'next-intl';
 import { clsx } from 'clsx';
+import { setLocaleAction } from '@/i18n/actions';
+import { Locale } from '@/i18n/config';
 
 interface SignboardHeaderProps {
   salonName?: string;
@@ -13,66 +16,73 @@ interface SignboardHeaderProps {
 
 export default function SignboardHeader({ salonName, salonNameHi }: SignboardHeaderProps) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations('nav');
+  const tCommon = useTranslations('common');
+  const tBrand = useTranslations('brand');
   const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
-  const [lang, setLang] = useState<'en' | 'hi'>('en');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 60);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    if (typeof document !== 'undefined') {
-      const match = document.cookie.match(/NEXT_LOCALE=(en|hi)/);
-      if (match && (match[1] === 'en' || match[1] === 'hi')) {
-        setLang(match[1]);
-      }
-    }
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleLang = () => {
-    const next = lang === 'en' ? 'hi' : 'en';
-    setLang(next);
-    document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=31536000`;
-    router.refresh();
+  const handleLanguageToggle = async () => {
+    if (isSwitching) return;
+    setIsSwitching(true);
+    const targetLocale: Locale = locale === 'en' ? 'hi' : 'en';
+    try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('ustaad_locale_dismissed', 'true');
+      }
+      await setLocaleAction(targetLocale);
+      router.refresh();
+    } finally {
+      setIsSwitching(false);
+    }
   };
 
-  const displayName = salonName ?? 'SalonWala';
-  const displayNameHi = salonNameHi ?? 'सैलनवाला';
+  // Determine brand name per language
+  const brandName =
+    locale === 'hi'
+      ? (salonNameHi && salonNameHi.trim() ? salonNameHi : (salonName ?? tBrand('name')))
+      : (salonName ?? tBrand('name'));
 
   const user = session?.user;
   const userRole = (user as unknown as { role?: string })?.role;
 
-  // Determine role-aware navigation links
-  const links: { label: string; labelHi: string; href: string }[] = [
-    { label: 'Salons', labelHi: 'सैलून', href: '/salons' },
+  // Single-language navigation links
+  const links: { label: string; href: string }[] = [
+    { label: t('salons'), href: '/salons' },
   ];
 
   if (user) {
     if (userRole === 'ADMIN') {
-      links.push({ label: 'Admin Desk', labelHi: 'एडमिन', href: '/admin' });
+      links.push({ label: t('admin'), href: '/admin' });
     } else if (userRole === 'BARBER' || userRole === 'OWNER') {
-      links.push({ label: 'Dashboard', labelHi: 'रजिस्टर', href: '/dashboard' });
+      links.push({ label: t('dashboard'), href: '/dashboard' });
     } else {
-      links.push({ label: 'My Bookings', labelHi: 'बुकिंग', href: '/bookings' });
+      links.push({ label: t('bookings'), href: '/bookings' });
     }
-    links.push({ label: 'Profile', labelHi: 'खाता', href: '/account' });
+    links.push({ label: t('account'), href: '/account' });
   } else {
-    links.push({ label: 'Login', labelHi: 'लॉगिन', href: '/login' });
+    links.push({ label: t('login'), href: '/login' });
   }
 
   const userGreeting = user
-    ? user.name || (user.email ? user.email.split('@')[0] : 'Grahak')
+    ? user.name || (user.email ? user.email.split('@')[0] : t('account'))
     : null;
 
   return (
     <header
       className={clsx(
-        'sticky top-0 z-50 bg-maroon border-b-2 border-marigold/40 transition-all duration-200 shadow-md',
+        'sticky top-0 z-40 bg-maroon border-b-2 border-marigold/40 transition-all duration-200 shadow-md',
         scrolled ? 'py-1' : 'py-2.5',
       )}
     >
@@ -105,23 +115,15 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
             />
           </div>
 
-          {/* Text Logo */}
+          {/* Text Logo: Single language display */}
           <Link href="/" className="flex flex-col leading-tight group">
             <span
               className={clsx(
-                'font-sign text-marigold tracking-wide transition-all duration-200 group-hover:text-chalk',
-                scrolled ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl',
+                'font-sign text-marigold tracking-normal transition-all duration-200 group-hover:text-chalk',
+                scrolled ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl',
               )}
             >
-              {displayName}
-            </span>
-            <span
-              className={clsx(
-                'font-body text-paper/80 transition-all duration-200 leading-none',
-                scrolled ? 'text-[11px] sm:text-xs' : 'text-xs sm:text-sm',
-              )}
-            >
-              {displayNameHi}
+              {brandName}
             </span>
           </Link>
         </div>
@@ -132,10 +134,9 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
             <Link
               key={link.href}
               href={link.href}
-              className="font-label font-bold text-paper hover:text-marigold transition-colors min-h-[44px] flex items-center gap-1.5"
+              className="font-label font-bold text-paper hover:text-marigold transition-colors min-h-[44px] flex items-center text-base"
             >
               <span>{link.label}</span>
-              <span className="font-body text-paper/60 text-xs">/ {link.labelHi}</span>
             </Link>
           ))}
 
@@ -149,7 +150,7 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="font-label font-bold text-xs uppercase text-paper/80 hover:text-poleRed hover:underline py-1"
               >
-                Logout / बाहर
+                {t('logout')}
               </button>
             </div>
           )}
@@ -157,14 +158,15 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
 
         {/* Right action bar: Language Switcher + Mobile Menu Button */}
         <div className="flex items-center gap-2">
-          {/* Language Toggle */}
+          {/* Language Toggle: Displays the OTHER language's name */}
           <button
-            onClick={toggleLang}
+            onClick={handleLanguageToggle}
             type="button"
-            className="font-label font-bold text-paper border-2 border-marigold/60 px-2.5 sm:px-3 py-1 min-h-[44px] text-xs sm:text-sm hover:bg-marigold hover:text-ink transition-all active:translate-x-[1px] active:translate-y-[1px]"
-            aria-label="Toggle language between English and Hindi"
+            disabled={isSwitching}
+            className="font-label font-bold text-paper border-2 border-marigold/60 px-3 py-1.5 min-h-[44px] text-sm sm:text-base hover:bg-marigold hover:text-ink transition-all active:scale-95 flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-marigold"
+            aria-label={tCommon('languageSwitchLabel')}
           >
-            {lang === 'en' ? 'EN | हिं' : 'हिं | EN'}
+            <span>{tCommon('languageSwitch')}</span>
           </button>
 
           {/* Mobile Menu Toggle Button */}
@@ -172,7 +174,7 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden flex flex-col justify-center items-center w-11 h-11 border-2 border-marigold/60 text-paper hover:bg-marigold hover:text-ink"
-            aria-label="Toggle Navigation Menu"
+            aria-label={t('toggleMenu')}
             aria-expanded={mobileMenuOpen}
           >
             <span className="block w-5 h-0.5 bg-current mb-1" />
@@ -187,7 +189,7 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
         <div className="md:hidden mx-2 mt-1 border-2 border-marigold bg-maroon p-3 flex flex-col gap-2">
           {user && (
             <div className="p-2 border-b border-marigold/30 text-marigold font-token text-xs flex justify-between items-center">
-              <span>Namaste, {userGreeting}</span>
+              <span>{userGreeting}</span>
               <span className="uppercase text-[10px] bg-ink/50 px-1.5 py-0.5">{userRole}</span>
             </div>
           )}
@@ -200,9 +202,21 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
               className="font-label font-bold text-paper hover:text-marigold py-2 px-3 border border-marigold/20 flex items-center justify-between min-h-[44px]"
             >
               <span>{link.label}</span>
-              <span className="font-body text-paper/60 text-sm">/ {link.labelHi}</span>
             </Link>
           ))}
+
+          {/* Language switcher inside mobile drawer */}
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              handleLanguageToggle();
+            }}
+            className="font-label font-bold text-paper bg-tealDeep py-2 px-3 border border-marigold/40 flex items-center justify-between min-h-[44px] mt-1"
+          >
+            <span>{tCommon('language')}</span>
+            <span className="text-marigold font-bold">{tCommon('languageSwitch')}</span>
+          </button>
 
           {user && (
             <button
@@ -213,8 +227,7 @@ export default function SignboardHeader({ salonName, salonNameHi }: SignboardHea
               }}
               className="font-label font-bold text-poleRed bg-paper text-left py-2 px-3 border border-poleRed flex items-center justify-between min-h-[44px] mt-1"
             >
-              <span>Logout</span>
-              <span className="font-body text-xs">/ लॉगआउट</span>
+              <span>{t('logout')}</span>
             </button>
           )}
         </div>

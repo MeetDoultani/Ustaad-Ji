@@ -4,25 +4,27 @@ import React, { useState, useTransition } from 'react';
 import { Salon, Barber, VerificationStatus } from '@prisma/client';
 import { updateSalonStatus, updateBarberStatus } from './actions';
 import { clsx } from 'clsx';
+import { useTranslations, useLocale } from 'next-intl';
+import { getLocalizedName } from '@/i18n/config';
 
 interface AdminClientProps {
   initialSalons: (Salon & { owner: { name: string | null; phone: string } })[];
   initialBarbers: (Barber & {
-    salon: { name: string };
+    salon: { name: string; nameHi?: string | null };
     user: { name: string | null; phone: string };
   })[];
 }
 
 export default function AdminClient({ initialSalons, initialBarbers }: AdminClientProps) {
+  const t = useTranslations('admin');
+  const locale = useLocale();
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
   const [isPending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleSalonAction = (salonId: string, name: string, status: VerificationStatus) => {
     if (status === VerificationStatus.REJECTED || status === VerificationStatus.SUSPENDED) {
-      const confirmed = window.confirm(
-        `Are you sure you want to mark salon "${name}" as ${status}?`
-      );
+      const confirmed = window.confirm(t('confirmSalon', { name, status }));
       if (!confirmed) return;
     }
 
@@ -37,9 +39,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
 
   const handleBarberAction = (barberId: string, name: string, status: VerificationStatus) => {
     if (status === VerificationStatus.REJECTED || status === VerificationStatus.SUSPENDED) {
-      const confirmed = window.confirm(
-        `Are you sure you want to mark barber "${name}" as ${status}?`
-      );
+      const confirmed = window.confirm(t('confirmBarber', { name, status }));
       if (!confirmed) return;
     }
 
@@ -86,7 +86,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
               : 'bg-steel/15 text-steel border-steel/40 hover:text-ink'
           )}
         >
-          Pending Verifications / विचाराधीन ({initialSalons.filter((s) => s.status === VerificationStatus.PENDING).length})
+          {t('pendingTab', { count: initialSalons.filter((s) => s.status === VerificationStatus.PENDING).length })}
         </button>
 
         <button
@@ -99,7 +99,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
               : 'bg-steel/15 text-steel border-steel/40 hover:text-ink'
           )}
         >
-          All Records / सभी रिकॉर्ड ({initialSalons.length})
+          {t('allTab', { count: initialSalons.length })}
         </button>
       </div>
 
@@ -107,10 +107,10 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
       <div className="border-4 border-maroon bg-paper p-4 sm:p-6 shadow-[5px_5px_0px_#7A1F2B] space-y-4">
         <div className="flex items-center justify-between border-b border-ink/20 pb-2">
           <h2 className="font-sign text-xl sm:text-2xl text-maroon">
-            Salons Management / सैलून सत्यापन
+            {t('salonsHeading')}
           </h2>
           <span className="font-token text-xs text-steel">
-            Count: {filteredSalons.length}
+            {t('count', { count: filteredSalons.length })}
           </span>
         </div>
 
@@ -119,30 +119,27 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
             <table className="w-full text-left font-body text-sm border-collapse">
               <thead>
                 <tr className="border-b-2 border-ink bg-tile/20 font-label font-bold text-xs uppercase text-ink">
-                  <th className="p-2 sm:p-3">Salon Name</th>
-                  <th className="p-2 sm:p-3">Area / City</th>
-                  <th className="p-2 sm:p-3">Owner Contact</th>
-                  <th className="p-2 sm:p-3">Status</th>
-                  <th className="p-2 sm:p-3 text-right">Actions</th>
+                  <th className="p-2 sm:p-3">{t('colSalonName')}</th>
+                  <th className="p-2 sm:p-3">{t('colAreaCity')}</th>
+                  <th className="p-2 sm:p-3">{t('colOwnerContact')}</th>
+                  <th className="p-2 sm:p-3">{t('colStatus')}</th>
+                  <th className="p-2 sm:p-3 text-right">{t('colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/20">
                 {filteredSalons.map((salon) => (
                   <tr key={salon.id} className="hover:bg-tile/10">
                     <td className="p-2 sm:p-3">
-                      <div className="font-bold text-ink">{salon.name}</div>
-                      {salon.nameHi && (
-                        <div className="text-xs text-steel">({salon.nameHi})</div>
-                      )}
+                      <div className="font-bold text-ink">{getLocalizedName(salon, locale)}</div>
                       <div className="font-token text-xs text-steel">
-                        slug: /{salon.slug}
+                        {t('slugPrefix', { slug: salon.slug })}
                       </div>
                     </td>
                     <td className="p-2 sm:p-3">
                       {salon.area}, {salon.city}
                     </td>
                     <td className="p-2 sm:p-3">
-                      <div>{salon.owner.name || 'Owner'}</div>
+                      <div>{salon.owner.name || t('owner')}</div>
                       <div className="font-token text-xs text-steel">
                         {salon.owner.phone}
                       </div>
@@ -179,7 +176,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                             }
                             className="bg-tile border border-tealDeep text-tealDeep px-2 py-1 font-label font-bold text-xs hover:bg-tile/80"
                           >
-                            Approve
+                            {t('approve')}
                           </button>
                         )}
                         {salon.status !== VerificationStatus.REJECTED && (
@@ -195,7 +192,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                             }
                             className="bg-paper border border-poleRed text-poleRed px-2 py-1 font-label font-bold text-xs hover:bg-poleRed hover:text-chalk"
                           >
-                            Reject
+                            {t('reject')}
                           </button>
                         )}
                         {salon.status !== VerificationStatus.SUSPENDED && (
@@ -211,7 +208,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                             }
                             className="bg-ink border border-ink text-chalk px-2 py-1 font-label font-bold text-xs hover:bg-ink/80"
                           >
-                            Suspend
+                            {t('suspend')}
                           </button>
                         )}
                       </div>
@@ -223,7 +220,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
           </div>
         ) : (
           <div className="p-6 text-center text-steel font-body text-sm bg-tile/10 border border-ink/20">
-            Koi pending salon nahi hai (No salons in this tab).
+            {t('noPendingSalons')}
           </div>
         )}
       </div>
@@ -232,10 +229,10 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
       <div className="border-4 border-maroon bg-paper p-4 sm:p-6 shadow-[5px_5px_0px_#7A1F2B] space-y-4">
         <div className="flex items-center justify-between border-b border-ink/20 pb-2">
           <h2 className="font-sign text-xl sm:text-2xl text-maroon">
-            Barbers Management / उस्ताद कारीगर सत्यापन
+            {t('barbersHeading')}
           </h2>
           <span className="font-token text-xs text-steel">
-            Count: {filteredBarbers.length}
+            {t('count', { count: filteredBarbers.length })}
           </span>
         </div>
 
@@ -244,11 +241,11 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
             <table className="w-full text-left font-body text-sm border-collapse">
               <thead>
                 <tr className="border-b-2 border-ink bg-tile/20 font-label font-bold text-xs uppercase text-ink">
-                  <th className="p-2 sm:p-3">Barber Name</th>
-                  <th className="p-2 sm:p-3">Assigned Salon</th>
-                  <th className="p-2 sm:p-3">User Phone</th>
-                  <th className="p-2 sm:p-3">Status</th>
-                  <th className="p-2 sm:p-3 text-right">Actions</th>
+                  <th className="p-2 sm:p-3">{t('colBarberName')}</th>
+                  <th className="p-2 sm:p-3">{t('colAssignedSalon')}</th>
+                  <th className="p-2 sm:p-3">{t('colUserPhone')}</th>
+                  <th className="p-2 sm:p-3">{t('colStatus')}</th>
+                  <th className="p-2 sm:p-3 text-right">{t('colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/20">
@@ -257,10 +254,10 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                     <td className="p-2 sm:p-3">
                       <div className="font-bold text-ink">{barber.displayName}</div>
                       <div className="text-xs text-steel">
-                        {barber.experienceYears}+ yrs exp
+                        {t('experience', { years: barber.experienceYears })}
                       </div>
                     </td>
-                    <td className="p-2 sm:p-3">{barber.salon.name}</td>
+                    <td className="p-2 sm:p-3">{getLocalizedName(barber.salon, locale)}</td>
                     <td className="p-2 sm:p-3 font-token text-xs">
                       {barber.user.phone}
                     </td>
@@ -296,7 +293,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                             }
                             className="bg-tile border border-tealDeep text-tealDeep px-2 py-1 font-label font-bold text-xs hover:bg-tile/80"
                           >
-                            Approve
+                            {t('approve')}
                           </button>
                         )}
                         {barber.status !== VerificationStatus.REJECTED && (
@@ -312,7 +309,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                             }
                             className="bg-paper border border-poleRed text-poleRed px-2 py-1 font-label font-bold text-xs hover:bg-poleRed hover:text-chalk"
                           >
-                            Reject
+                            {t('reject')}
                           </button>
                         )}
                         {barber.status !== VerificationStatus.SUSPENDED && (
@@ -328,7 +325,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
                             }
                             className="bg-ink border border-ink text-chalk px-2 py-1 font-label font-bold text-xs hover:bg-ink/80"
                           >
-                            Suspend
+                            {t('suspend')}
                           </button>
                         )}
                       </div>
@@ -340,7 +337,7 @@ export default function AdminClient({ initialSalons, initialBarbers }: AdminClie
           </div>
         ) : (
           <div className="p-6 text-center text-steel font-body text-sm bg-tile/10 border border-ink/20">
-            Koi pending ustaad nahi hai (No barbers in this tab).
+            {t('noPendingBarbers')}
           </div>
         )}
       </div>

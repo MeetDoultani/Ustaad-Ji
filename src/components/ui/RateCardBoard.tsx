@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { Service, ServiceCategory } from '@prisma/client';
 import { clsx } from 'clsx';
+import { useLocale, useTranslations } from 'next-intl';
 import { groupServicesByCategory, calculateServicesSummary } from '@/lib/salons';
+import { getLocalizedName } from '@/i18n/config';
 
 interface RateCardBoardProps {
   services: Service[];
@@ -13,17 +15,6 @@ interface RateCardBoardProps {
   className?: string;
   readOnly?: boolean;
 }
-
-const categoryLabels: Record<ServiceCategory, { en: string; hi: string }> = {
-  HAIR: { en: 'Hair', hi: 'बाल' },
-  BEARD: { en: 'Beard', hi: 'दाढ़ी' },
-  SHAVE: { en: 'Shave', hi: 'शेव' },
-  FACIAL: { en: 'Facial', hi: 'फेशियल' },
-  MASSAGE: { en: 'Head Massage', hi: 'चंपी' },
-  KIDS: { en: 'Kids', hi: 'बच्चे' },
-  BRIDAL: { en: 'Groom & Bridal', hi: 'विवाह' },
-  OTHER: { en: 'Other', hi: 'अन्य' },
-};
 
 const categoryOrder: ServiceCategory[] = [
   ServiceCategory.HAIR,
@@ -44,7 +35,12 @@ export default function RateCardBoard({
   className,
   readOnly = false,
 }: RateCardBoardProps) {
-  // Support either controlled or internal state
+  const locale = useLocale();
+  const tCard = useTranslations('rateCard');
+  const tDetails = useTranslations('salonDetails');
+  const tCommon = useTranslations('common');
+  const tCat = useTranslations('categories');
+
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
   const isControlled = externalSelectedIds !== undefined;
   const currentSelectedIds = isControlled ? externalSelectedIds : internalSelectedIds;
@@ -69,17 +65,17 @@ export default function RateCardBoard({
   return (
     <div
       className={clsx(
-        'relative bg-tealDeep border-8 border-maroon text-chalk p-4 sm:p-7 shadow-[6px_6px_0px_#2B2118]',
+        'relative bg-tealDeep border-8 border-maroon text-chalk p-4 sm:p-7 shadow-[6px_6px_0px_#2B2118] rounded-xl',
         className
       )}
     >
       {/* Decorative Chalk Header */}
       <div className="border-b-2 border-dashed border-marigold/60 pb-3 mb-6 text-center">
-        <h3 className="font-sign text-2xl sm:text-3xl text-marigold tracking-wide">
-          Rate Card / रेट कार्ड
+        <h3 className="font-sign text-2xl sm:text-3xl text-marigold tracking-normal">
+          {tDetails('rateCardTitle')}
         </h3>
-        <p className="font-body text-xs sm:text-sm text-chalk/80">
-          Chalk & Board Price List • All Taxes Included
+        <p className="font-body text-xs sm:text-sm text-chalk/80 mt-1">
+          {tCard('subtitle')}
         </p>
       </div>
 
@@ -88,17 +84,14 @@ export default function RateCardBoard({
         {categoryOrder.map((catKey) => {
           const catServices = grouped[catKey];
           if (!catServices || catServices.length === 0) return null;
-          const labels = categoryLabels[catKey] || { en: catKey, hi: catKey };
+          const categoryName = tCat(catKey);
 
           return (
             <div key={catKey} className="space-y-2">
-              {/* Category Subhead */}
+              {/* Category Subhead: Single language */}
               <div className="flex items-center gap-2 border-b border-chalk/30 pb-1">
-                <span className="font-sign text-lg sm:text-xl text-marigold">
-                  {labels.hi}
-                </span>
-                <span className="font-label text-sm sm:text-base text-chalk/90 font-bold uppercase tracking-wider">
-                  / {labels.en}
+                <span className="font-sign text-lg sm:text-xl text-marigold tracking-normal">
+                  {categoryName}
                 </span>
               </div>
 
@@ -106,6 +99,7 @@ export default function RateCardBoard({
               <div className="space-y-1.5">
                 {catServices.map((service) => {
                   const isSelected = currentSelectedIds.includes(service.id);
+                  const localizedName = getLocalizedName(service, locale);
 
                   return (
                     <div
@@ -121,7 +115,7 @@ export default function RateCardBoard({
                         }
                       }}
                       className={clsx(
-                        'flex items-center justify-between gap-2 p-2 transition-all min-h-[44px]',
+                        'flex items-center justify-between gap-2 p-2 transition-all min-h-[44px] rounded-lg',
                         readOnly ? 'cursor-default' : 'cursor-pointer',
                         isSelected
                           ? 'bg-marigold text-ink shadow-[2px_2px_0px_#2B2118]'
@@ -131,25 +125,15 @@ export default function RateCardBoard({
                       {/* Service Name & Duration */}
                       <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 flex-shrink-0">
                         <span className="font-label font-bold text-base sm:text-lg leading-tight">
-                          {service.name}
+                          {localizedName}
                         </span>
-                        {service.nameHi && (
-                          <span
-                            className={clsx(
-                              'font-body text-xs sm:text-sm',
-                              isSelected ? 'text-ink/80' : 'text-chalk/70'
-                            )}
-                          >
-                            ({service.nameHi})
-                          </span>
-                        )}
                         <span
                           className={clsx(
                             'font-body text-xs',
-                            isSelected ? 'text-ink/70' : 'text-chalk/60'
+                            isSelected ? 'text-ink/80' : 'text-chalk/70'
                           )}
                         >
-                          • {service.durationMin} mins
+                          • {service.durationMin} {tCard('mins')}
                         </span>
                       </div>
 
@@ -181,13 +165,13 @@ export default function RateCardBoard({
                               handleToggle(service.id);
                             }}
                             className={clsx(
-                              'font-label font-bold text-xs sm:text-sm px-3 py-1.5 border-2 min-h-[36px] transition-all',
+                              'px-3 py-1 text-xs font-label font-bold border-2 transition-all min-h-[36px] rounded',
                               isSelected
-                                ? 'bg-ink text-marigold border-ink'
-                                : 'bg-paper text-maroon border-maroon hover:bg-marigold hover:text-ink hover:border-ink'
+                                ? 'bg-ink text-marigold border-ink hover:bg-ink/80'
+                                : 'bg-chalk/10 text-chalk border-chalk/40 hover:bg-marigold hover:text-ink hover:border-marigold'
                             )}
                           >
-                            {isSelected ? '✓ Added' : 'Book / चुनें'}
+                            {isSelected ? tCard('selected') : tCard('book')}
                           </button>
                         )}
                       </div>
@@ -200,17 +184,24 @@ export default function RateCardBoard({
         })}
       </div>
 
-      {/* Selected Services Summary Bar */}
-      {summary.serviceCount > 0 && (
-        <div className="mt-8 border-t-2 border-dashed border-marigold/60 pt-4 bg-ink/80 -mx-4 -mb-4 sm:-mx-7 sm:-mb-7 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-chalk">
-          <div className="flex flex-col">
-            <span className="font-label font-bold text-sm text-chalk/80">
-              Selected: {summary.serviceCount} service{summary.serviceCount > 1 ? 's' : ''} ({summary.totalDurationMin} mins)
-            </span>
-            <div className="flex items-baseline gap-2">
-              <span className="font-body text-sm text-marigold">Total / कुल:</span>
-              <span className="font-token text-2xl sm:text-3xl text-marigold font-bold">
+      {/* Sticky Bottom Summary if items selected */}
+      {summary.serviceCount > 0 && !readOnly && (
+        <div className="mt-6 pt-4 border-t-2 border-marigold/60 flex flex-col sm:flex-row items-center justify-between gap-4 bg-tealDeep/80 p-3 rounded-lg">
+          <div className="flex items-baseline gap-4">
+            <div>
+              <span className="text-xs text-chalk/70 block uppercase font-label">
+                {tCard('total')}
+              </span>
+              <span className="font-token text-2xl font-bold text-marigold">
                 ₹{summary.totalPriceRupees}
+              </span>
+            </div>
+            <div>
+              <span className="text-xs text-chalk/70 block uppercase font-label">
+                {tCard('duration')}
+              </span>
+              <span className="font-body text-base font-bold text-chalk">
+                {summary.totalDurationMin} {tCard('mins')}
               </span>
             </div>
           </div>
@@ -219,9 +210,9 @@ export default function RateCardBoard({
             <button
               type="button"
               onClick={() => onBookNow(currentSelectedIds)}
-              className="w-full sm:w-auto bg-marigold text-ink font-label font-bold px-6 py-3 border-2 border-ink shadow-[3px_3px_0px_#2B2118] active:translate-x-0.5 active:translate-y-0.5 min-h-[44px]"
+              className="w-full sm:w-auto min-h-[44px] bg-marigold text-ink font-label font-bold px-6 py-2 border-2 border-ink shadow-[3px_3px_0px_#2B2118] active:translate-x-0.5 active:translate-y-0.5 hover:bg-saffron transition-all rounded-lg"
             >
-              Book Selected / स्लॉट बुक करें →
+              {tCommon('bookSlot')} ({summary.serviceCount})
             </button>
           )}
         </div>

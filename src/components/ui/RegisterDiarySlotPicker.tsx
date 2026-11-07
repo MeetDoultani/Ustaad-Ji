@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { clsx } from 'clsx';
+import { useLocale, useTranslations } from 'next-intl';
 
 export interface DiarySlot {
   time: string; // e.g. "10:00 AM"
@@ -17,20 +18,16 @@ export interface DiaryDateTab {
 }
 
 interface RegisterDiarySlotPickerProps {
-  // Date tabs
   dates?: DiaryDateTab[];
   selectedDateIst?: string;
   onSelectDateIst?: (dateIst: string) => void;
 
-  // Legacy index-based tabs for backwards compatibility
   selectedDay?: number;
   onSelectDay?: (dayIndex: number) => void;
 
-  // Selected slot state
-  selectedSlot?: string; // startsAt ISO string or time string
+  selectedSlot?: string;
   onSelectSlot?: (time: string, startsAt?: string) => void;
 
-  // Slots data
   slots?: Array<{
     startsAt: string;
     endsAt?: string;
@@ -45,42 +42,6 @@ interface RegisterDiarySlotPickerProps {
   className?: string;
 }
 
-const DEFAULT_DAY_LABELS: DiaryDateTab[] = [
-  { dateIst: '0', labelEn: 'Aaj', labelHi: 'आज' },
-  { dateIst: '1', labelEn: 'Kal', labelHi: 'कल' },
-  { dateIst: '2', labelEn: 'Day 3', labelHi: 'परसों' },
-  { dateIst: '3', labelEn: 'Day 4', labelHi: 'दिन 4' },
-  { dateIst: '4', labelEn: 'Day 5', labelHi: 'दिन 5' },
-  { dateIst: '5', labelEn: 'Day 6', labelHi: 'दिन 6' },
-  { dateIst: '6', labelEn: 'Day 7', labelHi: 'दिन 7' },
-];
-
-const generateDefaultSlots = (): Record<number, DiarySlot[]> => {
-  const times = [
-    '09:30 AM',
-    '10:15 AM',
-    '11:00 AM',
-    '11:45 AM',
-    '12:30 PM',
-    '02:00 PM',
-    '02:45 PM',
-    '03:30 PM',
-    '04:15 PM',
-    '05:00 PM',
-    '06:00 PM',
-    '07:00 PM',
-  ];
-
-  const map: Record<number, DiarySlot[]> = {};
-  for (let day = 0; day < 7; day++) {
-    map[day] = times.map((t, idx) => ({
-      time: t,
-      isBooked: (idx + day * 2) % 3 === 0,
-    }));
-  }
-  return map;
-};
-
 export default function RegisterDiarySlotPicker({
   dates,
   selectedDateIst,
@@ -92,20 +53,32 @@ export default function RegisterDiarySlotPicker({
   slots: directSlots,
   slotsByDay,
   isLoading = false,
-  emptyMessage = 'Is din koi slot uplabdh nahi hai.',
+  emptyMessage,
   className,
 }: RegisterDiarySlotPickerProps) {
+  const locale = useLocale();
+  const t = useTranslations('diary');
+  const tCommon = useTranslations('common');
   const [internalDay, setInternalDay] = useState(0);
   const [internalSlot, setInternalSlot] = useState<string | null>(null);
+
+  const defaultTabs: DiaryDateTab[] = [
+    { dateIst: '0', labelEn: t('today'), labelHi: t('today') },
+    { dateIst: '1', labelEn: t('tomorrow'), labelHi: t('tomorrow') },
+    { dateIst: '2', labelEn: t('day3'), labelHi: t('day3') },
+    { dateIst: '3', labelEn: t('day4'), labelHi: t('day4') },
+    { dateIst: '4', labelEn: t('day5'), labelHi: t('day5') },
+    { dateIst: '5', labelEn: t('day6'), labelHi: t('day6') },
+    { dateIst: '6', labelEn: t('day7'), labelHi: t('day7') },
+  ];
 
   const activeDay = externalDay !== undefined ? externalDay : internalDay;
   const activeSlot = externalSlot !== undefined ? externalSlot : internalSlot;
 
-  // Determine active tabs
   const tabs: DiaryDateTab[] =
     dates && dates.length > 0
       ? dates
-      : DEFAULT_DAY_LABELS;
+      : defaultTabs;
 
   const handleTabClick = (tab: DiaryDateTab, idx: number) => {
     if (onSelectDateIst) {
@@ -125,7 +98,6 @@ export default function RegisterDiarySlotPicker({
     setInternalSlot(startsAt || time);
   };
 
-  // Compute slot items to display
   let itemsToRender: DiarySlot[] = [];
   if (directSlots) {
     itemsToRender = directSlots.map((s) => ({
@@ -136,8 +108,6 @@ export default function RegisterDiarySlotPicker({
     }));
   } else if (slotsByDay) {
     itemsToRender = slotsByDay[activeDay] || [];
-  } else {
-    itemsToRender = generateDefaultSlots()[activeDay] || [];
   }
 
   return (
@@ -149,27 +119,28 @@ export default function RegisterDiarySlotPicker({
             ? tab.dateIst === selectedDateIst
             : idx === activeDay;
 
+          const tabLabel = locale === 'hi' ? tab.labelHi : tab.labelEn;
+
           return (
             <button
               key={tab.dateIst || idx}
               type="button"
               onClick={() => handleTabClick(tab, idx)}
               className={clsx(
-                'min-h-[44px] px-3 sm:px-3.5 py-1.5 font-label font-bold text-xs sm:text-sm border-t-2 border-x-2 rounded-t-md transition-all whitespace-nowrap',
+                'min-h-[44px] px-3 sm:px-4 py-2 font-label font-bold text-xs sm:text-sm border-t-2 border-x-2 rounded-t-md transition-all whitespace-nowrap',
                 isActive
                   ? 'bg-paper text-maroon border-maroon shadow-[-1px_-2px_0px_#2B2118] translate-y-0.5 z-10'
                   : 'bg-steel/20 text-steel border-steel/60 hover:bg-paper/60 hover:text-ink'
               )}
             >
-              <span>{tab.labelEn}</span>{' '}
-              <span className="font-body text-xs opacity-75">/ {tab.labelHi}</span>
+              <span>{tabLabel}</span>
             </button>
           );
         })}
       </div>
 
       {/* Notebook Register Page */}
-      <div className="relative bg-paper border-4 border-maroon shadow-[5px_5px_0px_#2B2118] flex min-h-[380px]">
+      <div className="relative bg-paper border-4 border-maroon shadow-[5px_5px_0px_#2B2118] flex min-h-[380px] rounded-b-xl rounded-tr-xl">
         {/* Left Edge: Spiral / Stitched Binding */}
         <div className="w-8 sm:w-10 bg-maroon/15 border-r border-maroon/30 flex flex-col justify-around py-4 flex-shrink-0">
           {[...Array(9)].map((_, i) => (
@@ -194,14 +165,14 @@ export default function RegisterDiarySlotPicker({
           <div className="ml-5 sm:ml-9 mb-4 border-b-2 border-ink/20 pb-2">
             <div className="flex items-baseline justify-between">
               <span className="font-sign text-lg sm:text-xl text-maroon">
-                Appointment Diary / बहीखाता
+                {t('appointmentDiary')}
               </span>
               <span className="font-token text-xs text-steel">
-                {selectedDateIst ? `Date: ${selectedDateIst}` : `Page #${activeDay + 1}`}
+                {selectedDateIst ? `${selectedDateIst}` : `Page #${activeDay + 1}`}
               </span>
             </div>
-            <p className="font-body text-xs text-ink/70">
-              Pen line across a slot indicates it is booked. Tap any available time line.
+            <p className="font-body text-xs text-ink/70 mt-0.5">
+              {t('pickerHint')}
             </p>
           </div>
 
@@ -210,18 +181,18 @@ export default function RegisterDiarySlotPicker({
             <div className="ml-5 sm:ml-9 py-12 flex flex-col items-center justify-center text-center">
               <div className="w-8 h-8 border-4 border-maroon border-t-transparent rounded-full animate-spin mb-3" />
               <p className="font-label font-bold text-sm text-maroon">
-                Diary panna khul raha hai... / डायरी लोड हो रही है...
+                {tCommon('loading')}
               </p>
             </div>
           )}
 
           {/* Empty State */}
           {!isLoading && itemsToRender.length === 0 && (
-            <div className="ml-5 sm:ml-9 py-12 text-center text-steel font-body border-2 border-dashed border-steel/40 p-4">
+            <div className="ml-5 sm:ml-9 py-12 text-center text-steel font-body border-2 border-dashed border-steel/40 p-4 rounded-lg">
               <p className="font-label text-base font-bold text-ink/80 mb-1">
-                Koi slot uplabdh nahi / कोई स्लॉट खाली नहीं
+                {t('noSlots')}
               </p>
-              <p className="text-xs">{emptyMessage}</p>
+              {emptyMessage && <p className="text-xs">{emptyMessage}</p>}
             </div>
           )}
 
@@ -232,71 +203,70 @@ export default function RegisterDiarySlotPicker({
                 const isSelected =
                   activeSlot === slot.startsAt || activeSlot === slot.time;
 
-                let reasonBadge = 'Booked / भरा हुआ';
+                let reasonBadge = t('booked');
                 if (slot.reason === 'past') {
-                  reasonBadge = 'Past / समय समाप्त';
+                  reasonBadge = t('reasonPast');
                 } else if (slot.reason === 'time_off') {
-                  reasonBadge = 'Break / छुट्टी';
+                  reasonBadge = t('reasonBreak');
                 } else if (slot.reason === 'too_short') {
-                  reasonBadge = 'Too Short / समय कम';
+                  reasonBadge = t('reasonTooShort');
                 }
 
                 return (
                   <div
                     key={slot.startsAt || index}
-                    onClick={() =>
-                      handleSlotClick(slot.time, slot.isBooked, slot.startsAt)
-                    }
+                    onClick={() => handleSlotClick(slot.time, slot.isBooked, slot.startsAt)}
                     role="button"
                     tabIndex={slot.isBooked ? -1 : 0}
                     aria-disabled={slot.isBooked}
+                    aria-pressed={isSelected}
                     onKeyDown={(e) => {
-                      if (e.key === ' ' || e.key === 'Enter') {
+                      if (!slot.isBooked && (e.key === ' ' || e.key === 'Enter')) {
                         e.preventDefault();
                         handleSlotClick(slot.time, slot.isBooked, slot.startsAt);
                       }
                     }}
                     className={clsx(
-                      'flex items-center justify-between py-2.5 px-2 transition-all min-h-[44px]',
+                      'group flex items-center justify-between py-2 sm:py-2.5 px-2 transition-all relative min-h-[44px]',
                       slot.isBooked
-                        ? 'cursor-not-allowed bg-steel/10'
-                        : 'cursor-pointer hover:bg-tile/20'
+                        ? 'cursor-not-allowed opacity-60 bg-steel/10'
+                        : 'cursor-pointer hover:bg-tile/20',
+                      isSelected &&
+                        'bg-marigold/30 font-bold border-l-4 border-maroon'
                     )}
                   >
-                    {/* Time written on notebook line */}
+                    {/* Time Slot on Ruled Line */}
                     <div className="flex items-center gap-3">
+                      <span className="font-token text-xs text-steel w-5">
+                        {String(index + 1).padStart(2, '0')}.
+                      </span>
                       <span
                         className={clsx(
-                          'font-token text-base sm:text-lg tracking-wide',
+                          'font-token text-base sm:text-lg tracking-tight',
                           slot.isBooked
-                            ? 'line-through decoration-poleRed decoration-2 text-steel select-none'
-                            : 'text-ink font-bold'
+                            ? 'line-through text-steel decoration-poleRed decoration-2'
+                            : isSelected
+                            ? 'text-maroon font-bold'
+                            : 'text-ink'
                         )}
                       >
                         {slot.time}
                       </span>
-
-                      {/* Booked label for accessibility */}
-                      {slot.isBooked && (
-                        <span className="font-label text-[11px] uppercase px-2 py-0.5 border border-poleRed/40 text-poleRed bg-paper font-bold select-none">
-                          {reasonBadge}
-                        </span>
-                      )}
                     </div>
 
-                    {/* Available indicator / Selection Circle */}
-                    <div>
-                      {slot.isBooked ? (
-                        <span className="text-steel font-token text-xs select-none">
-                          ✕
+                    {/* Status Badge */}
+                    <div className="flex items-center gap-2">
+                      {isSelected ? (
+                        <span className="font-label font-bold text-xs uppercase px-2 py-0.5 bg-maroon text-chalk border border-ink shadow-sm">
+                          {t('selected')}
                         </span>
-                      ) : isSelected ? (
-                        <span className="font-label font-bold text-xs sm:text-sm text-ink border-2 border-marigold bg-marigold px-3 py-1 shadow-[2px_2px_0px_#2B2118]">
-                          ✓ Selected / चुना गया
+                      ) : slot.isBooked ? (
+                        <span className="font-label font-bold text-[11px] uppercase px-1.5 py-0.5 bg-steel/20 text-steel border border-steel/40">
+                          {reasonBadge}
                         </span>
                       ) : (
-                        <span className="font-label font-bold text-xs text-maroon border border-maroon/60 bg-paper px-2.5 py-1 hover:bg-marigold hover:text-ink hover:border-ink transition-colors">
-                          Available / चुनें
+                        <span className="font-label font-bold text-[11px] uppercase px-2 py-0.5 bg-tile/40 text-tealDeep border border-tealDeep/40 group-hover:bg-marigold group-hover:text-ink group-hover:border-ink transition-colors">
+                          {t('available')}
                         </span>
                       )}
                     </div>

@@ -6,6 +6,8 @@ import { formatIstDate, formatIstTime, getNextIstDates } from '@/lib/time';
 import { CANCEL_CUTOFF_MIN, ACTIVE_STATUSES } from '@/lib/booking-config';
 import { SignboardHeader, BarberPoleDivider, TileBackground } from '@/components/ui';
 import TokenSlipClient from './TokenSlipClient';
+import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocalizedName } from '@/i18n/config';
 
 interface BookingDetailPageProps {
   params: Promise<{
@@ -26,9 +28,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     notFound();
   }
 
+  const locale = await getLocale();
+  const t = await getTranslations('token');
+  const tCommon = await getTranslations('common');
   const now = new Date();
   const startsAtDate = new Date(booking.startsAt);
-  const formattedDate = formatIstDate(startsAtDate, 'en', {
+  const formattedDate = formatIstDate(startsAtDate, locale, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -58,11 +63,11 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     });
 
     if (idx === 0) {
-      labelEn = 'Today';
-      labelHi = 'आज';
+      labelEn = tCommon('today');
+      labelHi = tCommon('today');
     } else if (idx === 1) {
-      labelEn = 'Tomorrow';
-      labelHi = 'कल';
+      labelEn = tCommon('tomorrow');
+      labelHi = tCommon('tomorrow');
     }
 
     return {
@@ -72,11 +77,13 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     };
   });
 
+  const localizedSalonName = getLocalizedName(booking.salon, locale);
+
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col pb-20">
       <SignboardHeader
-        salonName="Booking Slip / टोकन पर्ची"
-        salonNameHi="बुकिंग रसीद"
+        salonName={localizedSalonName}
+        salonNameHi={booking.salon.nameHi || undefined}
       />
 
       <main className="flex-1">
@@ -95,10 +102,10 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
         <BarberPoleDivider />
         <TileBackground variant="tile" className="py-6 px-4 text-center">
           <p className="font-sign text-lg text-maroon">
-            Indian Salon Booking • Digital Token System
+            {t('footerNote')}
           </p>
           <p className="font-body text-xs text-ink/70 mt-1">
-            Show this slip at the salon reception desk.
+            {t('footerInstruction')}
           </p>
         </TileBackground>
       </footer>

@@ -1,17 +1,20 @@
-# Indian Salon Booking Website (देसी सैलून, डिजिटल टोकन)
+# Ustaad-Ji (उस्ताद जी)
 
-A web app designed specifically for traditional Indian neighbourhood salons and barber shops. Customers find nearby salons, browse authentic painted rate-card boards, pick a barber and a time slot in the register diary, and receive a digital paper token slip.
+> **English Tagline:** No more waiting in line. Book your slot.  
+> **Hindi Tagline:** अब लाइन में नहीं, स्लॉट में
+
+A modern web application built specifically for traditional Indian neighbourhood salons and master barbers (*ustaads*). Customers find nearby parlours, browse authentic painted rate-card boards, pick a barber and a time slot in the register diary, and receive an authentic digital token slip without waiting in queue.
 
 ---
 
 ## Tech Stack
 - **Framework:** Next.js 15 (App Router, strict TypeScript)
-- **Styling:** Tailwind CSS with authentic Indian salon palette (`tile`, `tealDeep`, `paper`, `ink`, `marigold`, `saffron`, `maroon`, `steel`, `poleRed`, `poleBlue`, `chalk`)
+- **Styling:** Tailwind CSS with authentic Ustaad-Ji palette (`tile`, `tealDeep`, `paper`, `ink`, `marigold`, `saffron`, `maroon`, `steel`, `poleRed`, `poleBlue`, `chalk`)
 - **Typography:** Google Fonts loaded with Latin & Devanagari subsets (`Yatra One`, `Hind`, `Baloo 2`, `Special Elite`)
 - **Database & ORM:** PostgreSQL 16 (hosted on Supabase) + Prisma ORM (pooled on port 6543, direct on 5432)
 - **Advanced DB Constraints:** PostgreSQL `btree_gist` extension, `booking_no_overlap` exclusion constraint (code `23P01`), check constraints for positive prices, ratings, and time order
-- **i18n:** `next-intl` (English + Hindi) with cookie-based locale resolution preserving clean route URLs
-- **Testing:** Vitest for unit and integration database tests
+- **i18n:** `next-intl` (English + Devanagari Hindi) with single-language rendering, cookie-first resolution, user profile synchronization, and zero URL path prefixes
+- **Testing:** Vitest for unit, integration, and database constraint tests (110 tests)
 - **PWA:** Web manifest (`public/manifest.json`) and offline fallback page (`src/app/~offline/page.tsx`)
 
 ---
@@ -132,4 +135,34 @@ In development mode (`APP_ENV="development"` with `ALLOW_TEST_OTP="true"`), the 
 | **BARBER** | Ustaad Rakesh Sharma | `9000000004` | `123456` | Redirects to `/dashboard` |
 | **CUSTOMER** | Amit Verma | `9876543210` | `123456` | Redirects to `/bookings` (403 on `/dashboard` and `/admin`) |
 | **NEW USER** | Any new 10-digit number | e.g. `9812345678` | Printed to terminal log (`[ConsoleOtpSender]`) | Auto-creates `CUSTOMER` account, lands on `/bookings` |
+
+---
+
+## Internationalization (i18n)
+
+Ustaad-Ji provides true single-language rendering for **English** and **Hindi (हिन्दी)**:
+- **No Path Prefixes:** All routes remain clean (`/salons`, `/book/[salonSlug]`).
+- **Cookie-First Resolution:** The `NEXT_LOCALE` cookie stores user language preference (1-year lifetime, Lax, Secure).
+- **Account Sync:** When an authenticated user changes language on `/account` or via the navbar toggle, their choice is saved to `User.language` in PostgreSQL.
+- **Client State Preservation:** Changing languages triggers a server action setting `NEXT_LOCALE` followed by `router.refresh()`. In-progress slot selections and booking form states are preserved without full-page reloads.
+- **Latin Numerals:** All prices, token numbers, dates, and times strictly use standard Latin digits (`0-9`) and the `₹` symbol across both locales (`-u-nu-latn`).
+- **Authoritative Glossary:** See [docs/i18n-glossary.md](docs/i18n-glossary.md) for standard terminology and translation choices.
+
+### How to Add a New Language (e.g. Marathi / मराठी `mr`)
+
+1. **Register the Locale:**
+   Add the new locale code to `locales` in `src/i18n/config.ts`:
+   ```ts
+   export const locales = ['en', 'hi', 'mr'] as const;
+   ```
+2. **Create Message Dictionary:**
+   Create `src/messages/mr.json` by copying `src/messages/en.json` and translating the values into Marathi. Ensure all keys and `{placeholder}` variables match `en.json` exactly.
+3. **Add Toggle Label:**
+   In `src/messages/en.json`, `src/messages/hi.json`, and `src/messages/mr.json`, ensure appropriate language switcher button labels are provided.
+4. **Run i18n Tests:**
+   ```bash
+   npx vitest run src/tests/phase3b-i18n.test.ts
+   ```
+   The test suite automatically asserts 100% key parity and placeholder parity across all registered language files.
+
 

@@ -443,6 +443,8 @@ async function main() {
 
   const beardServ = createdServicesSalon1.find(s => s.name === 'Beard Trim & Precision Shape')!;
   const shaveServ = createdServicesSalon1.find(s => s.name === 'Classic Razor Shave')!;
+  const royalBeardServ = createdServicesSalon1.find(s => s.name === 'Royal Beard Styling with Hot Towel')!;
+  const detanServ = createdServicesSalon1.find(s => s.name === 'Detan Face Pack & Clean Up')!;
 
   const booking2 = await prisma.booking.create({
     data: {
@@ -480,23 +482,20 @@ async function main() {
     },
   });
 
-  // Sample Booking 3: Today afternoon, CONFIRMED (Barber 1, Customer 3)
-  // 1:30 PM IST = 810 min
-  const b3Starts = istToUtcDate(todayIst, 810);
-  const b3Ends = istToUtcDate(todayIst, 840);
-
+  // Sample Booking 3: Today morning, NO_SHOW (Barber 1, Customer 1)
+  // 10:00 AM IST = 600 min
   await prisma.booking.create({
     data: {
       salonId: salon1.id,
       barberId: barber1.id,
-      customerId: customer3.id,
+      customerId: customer1.id,
       token: 2,
       tokenDate: todayTokenDate,
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
-      status: BookingStatus.CONFIRMED,
-      startsAt: b3Starts,
-      endsAt: b3Ends,
+      status: BookingStatus.NO_SHOW,
+      startsAt: istToUtcDate(todayIst, 600),
+      endsAt: istToUtcDate(todayIst, 630),
       totalRupees: 100,
       items: {
         create: [{ serviceId: haircutServ.id, priceRupees: 100, durationMin: 30 }],
@@ -504,12 +503,143 @@ async function main() {
     },
   });
 
-  // Sample Booking 4: Tomorrow, CONFIRMED (Barber 2, Customer 1)
-  // 11:30 AM IST = 690 min
-  const b4Starts = istToUtcDate(tomorrowIst, 690);
-  const b4Ends = istToUtcDate(tomorrowIst, 715);
-  const royalBeardServ = createdServicesSalon1.find(s => s.name === 'Royal Beard Styling with Hot Towel')!;
+  // Sample Booking 4: Today mid-morning, IN_PROGRESS (Barber 1, Customer 2)
+  // 11:00 AM IST = 660 min
+  const b4Starts = istToUtcDate(todayIst, 660);
+  await prisma.booking.create({
+    data: {
+      salonId: salon1.id,
+      barberId: barber1.id,
+      customerId: customer2.id,
+      token: 3,
+      tokenDate: todayTokenDate,
+      type: BookingType.IN_SALON,
+      source: BookingSource.ONLINE,
+      status: BookingStatus.IN_PROGRESS,
+      startsAt: b4Starts,
+      endsAt: istToUtcDate(todayIst, 690),
+      totalRupees: 100,
+      checkedInAt: b4Starts,
+      startedAt: b4Starts,
+      items: {
+        create: [{ serviceId: haircutServ.id, priceRupees: 100, durationMin: 30 }],
+      },
+    },
+  });
 
+  // Sample Booking 5: Today noon, CHECKED_IN & WALK_IN (Barber 2, Walk-in customer)
+  // 11:30 AM IST = 690 min
+  const b5Starts = istToUtcDate(todayIst, 690);
+  await prisma.booking.create({
+    data: {
+      salonId: salon1.id,
+      barberId: barber2.id,
+      customerId: null,
+      walkInName: 'Sunil Kumar',
+      walkInPhone: '+919876599999',
+      token: 4,
+      tokenDate: todayTokenDate,
+      type: BookingType.IN_SALON,
+      source: BookingSource.WALK_IN,
+      status: BookingStatus.CHECKED_IN,
+      startsAt: b5Starts,
+      endsAt: istToUtcDate(todayIst, 715),
+      totalRupees: 120,
+      checkedInAt: b5Starts,
+      items: {
+        create: [{ serviceId: royalBeardServ.id, priceRupees: 120, durationMin: 25 }],
+      },
+    },
+  });
+
+  // Sample Booking 6: Today afternoon, CONFIRMED (Barber 3, Customer 3)
+  // 1:30 PM IST = 810 min
+  await prisma.booking.create({
+    data: {
+      salonId: salon1.id,
+      barberId: barber3.id,
+      customerId: customer3.id,
+      token: 5,
+      tokenDate: todayTokenDate,
+      type: BookingType.IN_SALON,
+      source: BookingSource.ONLINE,
+      status: BookingStatus.CONFIRMED,
+      startsAt: istToUtcDate(todayIst, 810),
+      endsAt: istToUtcDate(todayIst, 840),
+      totalRupees: 100,
+      items: {
+        create: [{ serviceId: haircutServ.id, priceRupees: 100, durationMin: 30 }],
+      },
+    },
+  });
+
+  // Sample Booking 7: Today afternoon, CANCELLED (Barber 2, Customer 1)
+  // 2:30 PM IST = 870 min
+  await prisma.booking.create({
+    data: {
+      salonId: salon1.id,
+      barberId: barber2.id,
+      customerId: customer1.id,
+      token: 6,
+      tokenDate: todayTokenDate,
+      type: BookingType.IN_SALON,
+      source: BookingSource.ONLINE,
+      status: BookingStatus.CANCELLED,
+      startsAt: istToUtcDate(todayIst, 870),
+      endsAt: istToUtcDate(todayIst, 900),
+      totalRupees: 250,
+      cancelledAt: now,
+      cancelReason: 'Customer called to reschedule due to traffic',
+      items: {
+        create: [{ serviceId: detanServ.id, priceRupees: 250, durationMin: 30 }],
+      },
+    },
+  });
+
+  // Sample Booking 8: Today afternoon, REJECTED (Barber 1, Customer 3)
+  // 3:30 PM IST = 930 min
+  await prisma.booking.create({
+    data: {
+      salonId: salon1.id,
+      barberId: barber1.id,
+      customerId: customer3.id,
+      token: 7,
+      tokenDate: todayTokenDate,
+      type: BookingType.IN_SALON,
+      source: BookingSource.ONLINE,
+      status: BookingStatus.REJECTED,
+      startsAt: istToUtcDate(todayIst, 930),
+      endsAt: istToUtcDate(todayIst, 960),
+      totalRupees: 100,
+      items: {
+        create: [{ serviceId: haircutServ.id, priceRupees: 100, durationMin: 30 }],
+      },
+    },
+  });
+
+  // Sample Booking 9: Today late afternoon, PENDING (Barber 3, Customer 2)
+  // 4:30 PM IST = 990 min
+  await prisma.booking.create({
+    data: {
+      salonId: salon1.id,
+      barberId: barber3.id,
+      customerId: customer2.id,
+      token: 8,
+      tokenDate: todayTokenDate,
+      type: BookingType.IN_SALON,
+      source: BookingSource.ONLINE,
+      status: BookingStatus.PENDING,
+      startsAt: istToUtcDate(todayIst, 990),
+      endsAt: istToUtcDate(todayIst, 1020),
+      totalRupees: 100,
+      items: {
+        create: [{ serviceId: haircutServ.id, priceRupees: 100, durationMin: 30 }],
+      },
+    },
+  });
+
+  // Sample Booking 10: Tomorrow, CONFIRMED (Barber 2, Customer 1)
+  // 11:30 AM IST = 690 min
   await prisma.booking.create({
     data: {
       salonId: salon1.id,
@@ -520,8 +650,8 @@ async function main() {
       type: BookingType.IN_SALON,
       source: BookingSource.ONLINE,
       status: BookingStatus.CONFIRMED,
-      startsAt: b4Starts,
-      endsAt: b4Ends,
+      startsAt: istToUtcDate(tomorrowIst, 690),
+      endsAt: istToUtcDate(tomorrowIst, 715),
       totalRupees: 120,
       items: {
         create: [{ serviceId: royalBeardServ.id, priceRupees: 120, durationMin: 25 }],
@@ -529,35 +659,24 @@ async function main() {
     },
   });
 
-  // Sample Booking 5: Tomorrow, CANCELLED (Barber 3, Customer 2)
-  // 3:00 PM IST = 900 min
-  const b5Starts = istToUtcDate(tomorrowIst, 900);
-  const b5Ends = istToUtcDate(tomorrowIst, 930);
-  const detanServ = createdServicesSalon1.find(s => s.name === 'Detan Face Pack & Clean Up')!;
-
-  await prisma.booking.create({
-    data: {
-      salonId: salon1.id,
-      barberId: barber3.id,
-      customerId: customer2.id,
-      token: 2,
-      tokenDate: tomorrowTokenDate,
-      type: BookingType.IN_SALON,
-      source: BookingSource.ONLINE,
-      status: BookingStatus.CANCELLED,
-      startsAt: b5Starts,
-      endsAt: b5Ends,
-      totalRupees: 250,
-      cancelledAt: now,
-      cancelReason: 'Customer requested cancellation online',
-      items: {
-        create: [{ serviceId: detanServ.id, priceRupees: 250, durationMin: 30 }],
+  // Seed daily token counter for salon1 today
+  await prisma.dailyTokenCounter.upsert({
+    where: {
+      salonId_date: {
+        salonId: salon1.id,
+        date: todayTokenDate,
       },
+    },
+    update: { last: 8 },
+    create: {
+      salonId: salon1.id,
+      date: todayTokenDate,
+      last: 8,
     },
   });
 
   console.log('\n===============================================================');
-  console.log('              INDIAN SALON BOOKING - TEST USERS                ');
+  console.log('                    USTAAD-JI - TEST USERS                    ');
   console.log('===============================================================');
   console.table([
     { Role: 'ADMIN', Name: 'Admin Sahab', Phone: '+919000000001', Salon: 'All / Platform', Status: 'Active' },

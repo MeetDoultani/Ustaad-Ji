@@ -253,4 +253,103 @@ The following capabilities are explicitly deferred to Phase 4 and later releases
 7. **Crowd & Wait-Time Analytics:**
    - Live queue length, moving average chair time, and peak hour rush charts.
 
+---
 
+## 8. Phase 3B: Rebrand to "Ustaad-Ji" & Single-Language i18n Architecture
+
+### 8.1 Rebrand to "Ustaad-Ji" (उस्ताद जी)
+- The application identity has transitioned from generic working titles ("Indian Salon Booking", "देसी सैलून") to **Ustaad-Ji** (English) and **उस्ताद जी** (Hindi).
+- Official taglines:
+  - English: *"No more waiting in line. Book your slot."*
+  - Hindi: *"अब लाइन में नहीं, स्लॉट में"*
+- Package name, web manifest, metadata, headers, token slips, and signboards have been updated with 100% brand consistency.
+
+### 8.2 Single-Language Rendering (Zero Bilingual Slash Pairs)
+- **Problem:** Early UI iterations used stacked English/Hindi or slash pairings (e.g., `Rate Card / रेट कार्ड`, `Ghar Wapas / Home`). This created visual clutter and cognitive overload for users on mobile devices.
+- **Solution:** Replaced with strict single-language rendering. Every screen is rendered completely in the user's active locale (English or Hindi). The only element displaying the other language is the language switcher button (e.g., displaying "हिन्दी" when in English, and "English" when in Hindi).
+
+### 8.3 Cookie-First Resolution with User Profile Sync & Zero URL Prefixes
+- Locale is resolved via the `NEXT_LOCALE` cookie (1-year lifetime, `SameSite=Lax`, `Secure` in production).
+- When a user logs in, their `User.language` preference in PostgreSQL is synchronized with `NEXT_LOCALE`.
+- Changing language updates the cookie, refreshes the active view via `router.refresh()`, and asynchronously persists the choice to the user's account in PostgreSQL if authenticated.
+- URL routes remain clean and un-prefixed (`/salons`, `/book/...`), preserving bookmarking and SEO integrity.
+
+### 8.4 Booking Form State Preservation Across Language Switches
+- Language switching executes a server action setting `NEXT_LOCALE` followed by `router.refresh()`.
+- Client components preserve React state (`selectedServiceIds`, `selectedBarberId`, `selectedDateIst`, `selectedSlotStartsAt`).
+- State is continuously mirrored into URL search parameters (`window.history.replaceState`), ensuring full persistence even during hard reloads.
+
+### 8.5 Strict Latin Digits & Currency Conventions
+- Both English and Hindi interfaces strictly use standard Latin digits (`0-9`) for all token numbers, prices, durations, dates, times, and phone numbers (`-u-nu-latn`).
+- Devanagari numerals (`०-९`) are intentionally avoided to ensure clarity and prevent transactional errors.
+- The standard Indian Rupee symbol (`₹`) is used universally.
+
+### 8.6 Single-Field Entity Localized Name Fallback
+- Salon and Service models store an optional `nameHi` column in PostgreSQL alongside `name`.
+- `getLocalizedName(entity, locale)` returns `nameHi` when in Hindi mode (if non-empty) and falls back cleanly to `name` in English mode or if `nameHi` is unpopulated.
+
+---
+
+## 9. Phase 4A: Architectural Decisions & Specification Precedence
+
+### 9.1 Conflict Resolutions (Phase 4A Prompt Precedence)
+Where earlier documents or specifications differed, Phase 4A prompt directives take strict precedence:
+1. **Terminology Harmonization:**
+   - English: Replaced "Master Barber" / "Our Master Barbers" with "Barber" / "Our Barbers" across all views.
+   - Hindi: Standardized on "उस्ताद" for all people-facing screens (cards, booking steps, admin, dashboard). "नाई" is retained exclusively in marketing copy (e.g. hero subtitle). Removed compound forms "उस्ताद कारीगर" and "उस्ताद नाई".
+2. **Category Nomenclature:**
+   - The `BRIDAL` enum displays as "Groom Styling" (English) and "दूल्हा स्टाइलिंग" (Hindi). Enum value remains `BRIDAL`.
+3. **No Fabricated Data or Invented Wait Times:**
+   - Home page stats ("Verified Salons", "Expert Barbers", "Tokens Issued") are derived exclusively from real database counts (`prisma.salon.count({ where: { status: 'VERIFIED' } })`, `prisma.barber.count({ where: { status: 'VERIFIED', isActive: true } })`, `prisma.booking.count()`). Zero counts are hidden.
+   - Salon card "Estimated wait" badge and placeholder `LiveQueueBoard` displays on public pages are removed until real queue metrics arrive in Phase 7.
+4. **Correction of False Offline Claim:**
+   - Offline page description in both languages removes false claims of saved bookings availability and states: check internet connection and try again.
+5. **Gated Dev Credentials Hint:**
+   - `auth.devHint` displays on login only when `APP_ENV !== 'production' && ALLOW_TEST_OTP === 'true'`.
+6. **Internal Engineering Labels Deprecated:**
+   - "Register Diary Slot Picker" -> "Pick a time" / "समय चुनें"
+   - "Rate Card Board" -> "Rate Card" / "रेट कार्ड"
+   - "Customer Reviews & Pinned Slips" -> "Customer Reviews" / "ग्राहकों की राय"
+   - "Salons Management" / "Barbers Management" -> "Manage Salons" / "Manage Barbers"
+   - "User Phone" -> "Phone"
+   - "Verify & Enter" -> "Verify"
+7. **Config-Driven Dynamic Messages:**
+   - All user-facing error and notification messages referencing 15 minutes, 60 minutes, 14 days, or 5 active bookings interpolate dynamic placeholders (`{minutes}`, `{days}`, `{count}`) from `src/lib/booking-config.ts`.
+
+### 9.2 Staff Dashboard Architecture (Phase 4A)
+1. **Server-Enforced Scoping:**
+   - Barbers see only bookings assigned to their own barber profile (`barberId = barber.id`).
+   - Salon owners see bookings across all salons they own, with validated multi-salon selector (`?salonId=`).
+   - Any query or action targeting a booking or barber from another salon returns 404 (`NOT_FOUND`), preventing cross-tenant leakage.
+   - Salon or barber records that are `PENDING`, `REJECTED`, or `SUSPENDED` render themed signboard notices ("Awaiting Verification" or "Suspended") and hide all register data.
+2. **Pure State Machine & Race Safety:**
+   - Transition rules are cleanly decoupled in `src/lib/booking-status.ts`.
+   - `NO_SHOW` is rejected with `NO_SHOW_TOO_EARLY` if current time is before `startsAt`.
+   - `IN_PROGRESS` is rejected with `CHAIR_BUSY` if the barber already has an active booking in the chair.
+   - Status updates require `expectedStatus` and execute via atomic `prisma.booking.updateMany({ where: { id, status: expectedStatus } })`. Mismatches return `STATUS_CONFLICT` without modifying data.
+   - Cancellation requires a 3-200 character reason and sets `cancelledAt`. Check-in sets `checkedInAt`. Starting a service sets `startedAt` and auto-backfills `checkedInAt` if skipped.
+   - Structured audit logs are output to the server console with no phone numbers.
+3. **Walk-In Token Allocation:**
+   - Staff can issue walk-in tokens via `/dashboard/walk-in`.
+   - Earliest available slot on the 15-minute grid is automatically selected with 0-minute lead time.
+   - Sequential token is allocated atomically from `DailyTokenCounter`.
+   - Rate limit of 60 walk-ins per staff user per hour is enforced.
+4. **Phase 4B Scope Boundary:**
+   - Profile editors, service editors, weekly availability managers, and barber roster additions remain strictly in Phase 4B backlog.
+
+### 9.3 Database Concurrency & Privacy Hardening
+1. **Database-Level Chair-Busy Constraint (`barber_single_in_progress`):**
+   - In addition to application-level pre-checks, PostgreSQL enforces a partial unique index:
+     ```sql
+     CREATE UNIQUE INDEX "barber_single_in_progress" 
+     ON "Booking"("barberId") 
+     WHERE status = 'IN_PROGRESS';
+     ```
+   - This provides absolute database guarantees against race conditions when two staff members attempt to start appointments for the same barber simultaneously. PostgreSQL error `23505` and Prisma error `P2002` are trapped and mapped cleanly to `{ ok: false, code: 'CHAIR_BUSY', message: 'This barber already has a customer in the chair.' }`.
+2. **Staff Walk-in Rate Limiting Implementation:**
+   - Walk-in tokens are limited to 60 per staff user per hour (`checkStaffWalkInRateLimit`).
+   - In the current single-instance deployment, this is tracked using an in-memory sliding window history map keyed by `staffUserId`.
+   - **Production Requirement:** In multi-instance or serverless edge production deployments, this counter must be migrated to a distributed shared store (e.g., Upstash Redis with sliding window rate limiting).
+3. **Server-Side Phone Privacy:**
+   - Phone numbers returned in `getRegisterBookings` DTOs are masked on the server (`maskPhoneForRegister`) as `+91 ******3210` before serialization to client components.
+   - Full, unmasked phone numbers are strictly restricted to authorized staff viewing individual booking details in `getBookingDetailStaff` (/dashboard/bookings/[id]) to power the direct click-to-call action.

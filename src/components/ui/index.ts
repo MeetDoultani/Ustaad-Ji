@@ -9,3 +9,4 @@ export { default as UstaadCard } from './UstaadCard';
 export { default as RegisterDiarySlotPicker } from './RegisterDiarySlotPicker';
 export { default as TokenSlip } from './TokenSlip';
 export { default as LiveQueueBoard } from './LiveQueueBoard';
+export { default as LanguagePickerOverlay } from './LanguagePickerOverlay';

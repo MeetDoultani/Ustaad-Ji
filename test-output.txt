@@ -9,28 +9,121 @@
  [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mPolicy: canRescheduleBooking[2m > [22mdenies another customer from rescheduling[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mPolicy: canRescheduleBooking[2m > [22mdenies assigned barber and salon owner (customer self-serve only)[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mPolicy: canRescheduleBooking[2m > [22mallows ADMIN to reschedule[32m 0[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mprevents double booking in a 5-way parallel race (exactly 1 wins, 4 get SLOT_TAKEN)[33m 7033[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22menforces MAX_ACTIVE_BOOKINGS_PER_CUSTOMER limit[33m 1182[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mprevents customer from booking overlapping slots across any barber or salon[33m 1356[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mallows customer to cancel > 60 min before start, but rejects within 60 min cutoff[33m 1933[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mreschedules successfully inside a transaction, and rolls back if new slot is taken[33m 3223[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mstrictly isolates booking access between customers and barbers[33m 1891[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 1: rejects booking requests for off-grid start times (e.g. 10:07)[32m 137[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 2: rejects booking requests for times outside operational salon or barber hours[33m 1127[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 3: rejects booking requests in the past or beyond the 14-day advance window[32m 128[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 4: rejects services belonging to a different salon[33m 1620[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 5: rejects barbers not mapped to all selected services via BarberService[33m 1408[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 6: rejects unverified, rejected, or suspended salons and barbers[33m 944[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 7: rejects inactive services (isActive: false)[33m 1656[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 8: rejects empty services array and duplicate service IDs[32m 129[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 9: computes tamper-proof pricing and duration solely from database records[33m 2283[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 10 & 11: allocates sequential daily tokens and rolls back counter on transaction failure[33m 5880[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 12: creates bookings with status PENDING when salon.requiresApproval is true[33m 2516[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 13: blocks customers exceeding MAX_BOOKINGS_CREATED_PER_HOUR (5 bookings/hour)[33m 1315[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 14: allows staff to cancel at any time with mandatory non-empty reason; rejects empty reason[33m 1204[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 15: slot reuse: cancelling a booking immediately frees that slot for new reservations[33m 5316[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 16: double-submission guard: concurrent identical booking submissions produce exactly one booking[33m 3400[2mms[22m[39m
- [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 17: role validation in core service: rejects createBooking for non-customer roles directly in createBooking[32m 271[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mprevents double booking in a 5-way parallel race (exactly 1 wins, 4 get SLOT_TAKEN)[33m 6112[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22menforces MAX_ACTIVE_BOOKINGS_PER_CUSTOMER limit[33m 984[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mprevents customer from booking overlapping slots across any barber or salon[33m 1128[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mallows customer to cancel > 60 min before start, but rejects within 60 min cutoff[33m 1820[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mreschedules successfully inside a transaction, and rolls back if new slot is taken[33m 2935[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mstrictly isolates booking access between customers and barbers[33m 1564[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 1: rejects booking requests for off-grid start times (e.g. 10:07)[32m 230[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 2: rejects booking requests for times outside operational salon or barber hours[33m 1003[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 3: rejects booking requests in the past or beyond the 14-day advance window[32m 120[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 4: rejects services belonging to a different salon[33m 1440[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 5: rejects barbers not mapped to all selected services via BarberService[33m 1248[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 6: rejects unverified, rejected, or suspended salons and barbers[33m 840[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 7: rejects inactive services (isActive: false)[33m 1639[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 8: rejects empty services array and duplicate service IDs[32m 119[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 9: computes tamper-proof pricing and duration solely from database records[33m 2024[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 10 & 11: allocates sequential daily tokens and rolls back counter on transaction failure[33m 5344[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 12: creates bookings with status PENDING when salon.requiresApproval is true[33m 2257[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 13: blocks customers exceeding MAX_BOOKINGS_CREATED_PER_HOUR (5 bookings/hour)[33m 1331[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 14: allows staff to cancel at any time with mandatory non-empty reason; rejects empty reason[33m 1092[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 15: slot reuse: cancelling a booking immediately frees that slot for new reservations[33m 4799[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 16: double-submission guard: concurrent identical booking submissions produce exactly one booking[33m 3133[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-booking.test.ts[2m > [22mPhase 3: Real Slot Booking & Policy Tests[2m > [22mBooking Integration & Concurrency on Supabase[2m > [22mRule 17: role validation in core service: rejects createBooking for non-customer roles directly in createBooking[32m 256[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mdirect customer denial at service layer: rejects updateBookingStatus and createWalkIn directly[32m 141[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22munverified/inactive staff denial: unverified or suspended salon, and inactive barber are rejected[33m 1190[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mcross-salon owner write isolation & salon switching: rejects foreign salon writes and isolates queries[33m 1660[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2matomic status update race (Promise.all): two simultaneous calls on same booking yield exactly one success and one STATUS_CONFLICT
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzhq60036vbt405gx3j7r","from":"CONFIRMED","to":"CHECKED_IN","timestamp":"2026-11-05T16:44:09.096Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22matomic status update race (Promise.all): two simultaneous calls on same booking yield exactly one success and one STATUS_CONFLICT[33m 665[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mconcurrent chair-busy race (Promise.all): two simultaneous START actions on different bookings for same barber yield 1 success and 1 CHAIR_BUSY
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzi8n0038vbt48hja4fns","from":"CHECKED_IN","to":"IN_PROGRESS","timestamp":"2026-11-05T16:44:09.892Z"}
+
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mconcurrent chair-busy race (Promise.all): two simultaneous START actions on different bookings for same barber yield 1 success and 1 CHAIR_BUSY
+[22m[39mprisma:error 
+Invalid `prisma.booking.updateMany()` invocation in
+D:\Indian-salon-booking\src\lib\dashboard-service.ts:710:35
+
+  707 // 7. Atomic conditional update to guard race conditions
+  708 let result;
+  709 try {
+→ 710   result = await prisma.booking.updateMany(
+Unique constraint failed on the fields: (`barberId`)
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mconcurrent chair-busy race (Promise.all): two simultaneous START actions on different bookings for same barber yield 1 success and 1 CHAIR_BUSY[33m 1348[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mstate machine timestamps: checkedInAt, startedAt, completedAt, and cancelledAt + cancelReason are accurately recorded
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzja3003cvbt427kgmgia","from":"CONFIRMED","to":"CHECKED_IN","timestamp":"2026-11-05T16:44:11.116Z"}
+
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mstate machine timestamps: checkedInAt, startedAt, completedAt, and cancelledAt + cancelReason are accurately recorded
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzja3003cvbt427kgmgia","from":"CHECKED_IN","to":"IN_PROGRESS","timestamp":"2026-11-05T16:44:11.641Z"}
+
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mstate machine timestamps: checkedInAt, startedAt, completedAt, and cancelledAt + cancelReason are accurately recorded
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzja3003cvbt427kgmgia","from":"IN_PROGRESS","to":"COMPLETED","timestamp":"2026-11-05T16:44:12.305Z"}
+
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mstate machine timestamps: checkedInAt, startedAt, completedAt, and cancelledAt + cancelReason are accurately recorded
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzkpp003evbt47c4z8pa9","from":"CONFIRMED","to":"CANCELLED","timestamp":"2026-11-05T16:44:12.969Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mstate machine timestamps: checkedInAt, startedAt, completedAt, and cancelledAt + cancelReason are accurately recorded[33m 3148[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mslot release after staff cancellation/rejection/no-show: slot becomes available again
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzlpj003gvbt4c3ollzsf","from":"CONFIRMED","to":"CANCELLED","timestamp":"2026-11-05T16:44:14.678Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mslot release after staff cancellation/rejection/no-show: slot becomes available again[33m 1680[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mWalk-in Integration Scenarios[2m > [22m[2mcreates WALK_IN source and CHECKED_IN status with customerId = null
+[22m[39m{"event":"WALK_IN_TOKEN_CREATED","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rznp3003ivbt4avvom731","token":1,"barberId":"cmw3rzbbp0011vbt499u8hr0u","timestamp":"2026-11-05T10:30:00.000Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mcreates WALK_IN source and CHECKED_IN status with customerId = null[33m 1352[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mWalk-in Integration Scenarios[2m > [22m[2mtoken allocation continues the same sequential counter after online bookings on the same day
+[22m[39m{"event":"WALK_IN_TOKEN_CREATED","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzoye003ovbt4diisymfm","token":11,"barberId":"cmw3rzbbp0011vbt499u8hr0u","timestamp":"2026-11-05T12:00:00.000Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mtoken allocation continues the same sequential counter after online bookings on the same day[33m 1372[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mWalk-in Integration Scenarios[2m > [22m[2mtakes the earliest free start time on the 15-minute grid without lead time
+[22m[39m{"event":"WALK_IN_TOKEN_CREATED","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzpwc003svbt43dx4vr86","token":12,"barberId":"cmw3rzbbp0011vbt499u8hr0u","timestamp":"2026-11-05T05:33:00.000Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mtakes the earliest free start time on the 15-minute grid without lead time[33m 1226[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mWalk-in Integration Scenarios[2m > [22m[2mblocks that allocated time in the online slot list
+[22m[39m{"event":"WALK_IN_TOKEN_CREATED","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzqqw003wvbt4lsrob51i","token":13,"barberId":"cmw3rzbbp0011vbt499u8hr0u","timestamp":"2026-11-05T13:30:00.000Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mblocks that allocated time in the online slot list[33m 1516[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mreturns NO_FREE_TIME when the barber is fully booked or the salon is closed[33m 908[2mms[22m[39m
+[90mstdout[2m | src/tests/phase4a-dashboard.test.ts[2m > [22m[2mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22m[2mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22m[2mWalk-in Integration Scenarios[2m > [22m[2mnever links a walk-in to an existing user with the same phone and exposes no details of that user account
+[22m[39m{"event":"WALK_IN_TOKEN_CREATED","staffUserId":"cmw3rzb7t000zvbt4n2u6ko8s","bookingId":"cmw3rzsm40040vbt4kk1656xw","token":14,"barberId":"cmw3rzbbp0011vbt499u8hr0u","timestamp":"2026-11-05T04:30:00.000Z"}
+
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mnever links a walk-in to an existing user with the same phone and exposes no details of that user account[33m 1232[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mrejects services of another salon, inactive services, and services not performed by that barber[33m 2075[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22menforces rate limiting: the 61st walk-in creation within an hour by the same staff user returns WALKIN_LIMIT[33m 364[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mregister list phone privacy: Data-transfer objects returned by the server for the register list never include full phone numbers[33m 562[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 2: Missing Real Database Tests with Isolated Fixtures[2m > [22mWalk-in Integration Scenarios[2m > [22mcustomer-facing status mapping: token slip and booking helpers return correct localized status label for all 8 statuses and cancelReason[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-dashboard.test.ts[2m > [22mPhase 4A: Dedicated Database & Concurrency Tests[2m > [22mSection 7: ConsoleOtpSender Production Guard[2m > [22mthrows error when APP_ENV === "production" or NODE_ENV === "production"[32m 6[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock E: Pure State Machine (booking-status.ts)[2m > [22mallows all expected forward transitions[32m 2[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock E: Pure State Machine (booking-status.ts)[2m > [22mrejects forbidden or backward transitions with INVALID_TRANSITION[32m 2[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock E: Pure State Machine (booking-status.ts)[2m > [22menforces NO_SHOW timing rule (only allowed at or after startsAt)[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock E: Pure State Machine (booking-status.ts)[2m > [22menforces CHAIR_BUSY rule (at most one IN_PROGRESS per barber chair)[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock E: Pure State Machine (booking-status.ts)[2m > [22menforces WRONG_DAY rule on CONFIRMED -> CHECKED_IN and CONFIRMED -> IN_PROGRESS[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock D: Staff Policies & Scoping Rules (policies.ts)[2m > [22mcanViewStaffDashboard allows only active BARBER and OWNER[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mBlock D: Staff Policies & Scoping Rules (policies.ts)[2m > [22mcanCreateWalkIn enforces chair operation authorization[32m 0[2mms[22m[39m
+[90mstdout[2m | src/tests/dashboard.test.ts[2m > [22m[2mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22m[2mIntegration: Staff Actions & Register Scoping (Database)[2m > [22m[2mexecutes atomic status updates and detects race condition conflicts
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzy1o000jvbeox237mczw","bookingId":"cmw3s00b9001jvbeo19jh5cr0","from":"CONFIRMED","to":"CHECKED_IN","timestamp":"2026-11-05T16:44:33.299Z"}
+
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mexecutes atomic status updates and detects race condition conflicts[33m 1318[2mms[22m[39m
+[90mstdout[2m | src/tests/dashboard.test.ts[2m > [22m[2mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22m[2mIntegration: Staff Actions & Register Scoping (Database)[2m > [22m[2mauto-backfills checkedInAt if skipped when transitioning directly to IN_PROGRESS
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzy9f000mvbeosdm820i2","bookingId":"cmw3s01bv001nvbeoftajog7x","from":"CONFIRMED","to":"IN_PROGRESS","timestamp":"2026-11-05T16:44:34.614Z"}
+
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mauto-backfills checkedInAt if skipped when transitioning directly to IN_PROGRESS[33m 1063[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22menforces chair busy and prevents two concurrent IN_PROGRESS bookings for the same barber[33m 666[2mms[22m[39m
+[90mstdout[2m | src/tests/dashboard.test.ts[2m > [22m[2mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22m[2mIntegration: Staff Actions & Register Scoping (Database)[2m > [22m[2mrequires a 3 to 200 character cancellation reason for staff cancellations
+[22m[39m{"event":"BOOKING_STATUS_CHANGE","staffUserId":"cmw3rzy1o000jvbeox237mczw","bookingId":"cmw3s02o1001vvbeootsk4gyi","from":"CONFIRMED","to":"CANCELLED","timestamp":"2026-11-05T16:44:37.399Z"}
+
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mrequires a 3 to 200 character cancellation reason for staff cancellations[33m 2504[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22menforces barber scoping: barber cannot modify another barber booking[33m 504[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mrejects checking in or starting a booking on the wrong day with WRONG_DAY at service level[33m 1476[2mms[22m[39m
+[90mstdout[2m | src/tests/dashboard.test.ts[2m > [22m[2mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22m[2mIntegration: Staff Actions & Register Scoping (Database)[2m > [22m[2mcreates a walk-in token and allocates sequential token number
+[22m[39m{"event":"WALK_IN_TOKEN_CREATED","staffUserId":"cmw3rzy1o000jvbeox237mczw","bookingId":"cmw3s06td0027vbeojtyqsvro","token":1,"barberId":"cmw3rzy5j000lvbeotdmr3nhd","timestamp":"2026-11-05T04:30:00.000Z"}
+
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mcreates a walk-in token and allocates sequential token number[33m 1339[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mscoping in getRegisterBookings: barber sees only their own; owner sees all[33m 1204[2mms[22m[39m
+ [32m✓[39m src/tests/dashboard.test.ts[2m > [22mPhase 4A: Staff Dashboard & State Machine Tests[2m > [22mIntegration: Staff Actions & Register Scoping (Database)[2m > [22mgetBookingDetailStaff returns full staff booking details and enforces 404 security[33m 1819[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mPhone Normalisation (normalizeIndianPhone)[2m > [22maccepts standard 10-digit Indian mobile numbers and normalises to E.164[32m 4[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mPhone Normalisation (normalizeIndianPhone)[2m > [22maccepts numbers with +91 prefix and formatting characters (spaces, dashes)[32m 1[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mPhone Normalisation (normalizeIndianPhone)[2m > [22maccepts numbers with leading 0 (trunk prefix)[32m 0[2mms[22m[39m
@@ -56,63 +149,63 @@
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mCentral Policy Module (src/lib/policies.ts)[2m > [22menforces cross-salon owner isolation: Owner of Salon A cannot view or update bookings belonging to Salon B[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mCentral Policy Module (src/lib/policies.ts)[2m > [22menforces canManageBarber and canManageBarberAvailability granularity[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mCentral Policy Module (src/lib/policies.ts)[2m > [22mrestricts admin actions strictly to ADMIN role[32m 0[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22mgenerates HMAC hash and uses constant-time compare[33m 364[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22mgenerates HMAC hash and uses constant-time compare[33m 452[2mms[22m[39m
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2missues OTP, stores only hash, and allows single-use verification
-[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 763823
+[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 922704
 
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22missues OTP, stores only hash, and allows single-use verification[33m 944[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22mrejects expired OTP code[33m 408[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22m5 wrong attempts invalidate the code even if the correct code follows[33m 1204[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22missues OTP, stores only hash, and allows single-use verification[33m 940[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22mrejects expired OTP code[33m 388[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22m5 wrong attempts invalidate the code even if the correct code follows[33m 1176[2mms[22m[39m
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2missuing a newer OTP invalidates previous unconsumed codes
-[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 278307
+[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 155996
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2missuing a newer OTP invalidates previous unconsumed codes
-[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 152467
+[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 326368
 
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22missuing a newer OTP invalidates previous unconsumed codes[33m 1060[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22missuing a newer OTP invalidates previous unconsumed codes[33m 1041[2mms[22m[39m
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces 30s resend cooldown for the same phone
-[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 119633
+[22m[39m[ConsoleOtpSender] OTP for +919876599999 (+91******9999): 467111
 
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22menforces 30s resend cooldown for the same phone[33m 529[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22menforces max 3 OTP requests per phone per 10 minutes[33m 360[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22menforces 30s resend cooldown for the same phone[33m 515[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22menforces max 3 OTP requests per phone per 10 minutes[33m 344[2mms[22m[39m
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000000 (+91******0000): 891749
-
-[90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000001 (+91******0001): 280733
+[22m[39m[ConsoleOtpSender] OTP for +919870000000 (+91******0000): 646020
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000002 (+91******0002): 626672
+[22m[39m[ConsoleOtpSender] OTP for +919870000001 (+91******0001): 714542
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000003 (+91******0003): 915111
+[22m[39m[ConsoleOtpSender] OTP for +919870000002 (+91******0002): 316861
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000004 (+91******0004): 620260
+[22m[39m[ConsoleOtpSender] OTP for +919870000003 (+91******0003): 742822
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000005 (+91******0005): 862514
+[22m[39m[ConsoleOtpSender] OTP for +919870000004 (+91******0004): 372707
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000006 (+91******0006): 493251
+[22m[39m[ConsoleOtpSender] OTP for +919870000005 (+91******0005): 168890
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000007 (+91******0007): 492157
+[22m[39m[ConsoleOtpSender] OTP for +919870000006 (+91******0006): 659536
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000008 (+91******0008): 833805
+[22m[39m[ConsoleOtpSender] OTP for +919870000007 (+91******0007): 520028
 
 [90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
-[22m[39m[ConsoleOtpSender] OTP for +919870000009 (+91******0009): 290123
+[22m[39m[ConsoleOtpSender] OTP for +919870000008 (+91******0008): 467234
 
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22menforces IP rate limits for OTP requests and verification attempts[33m 3247[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mnew phone login creates a CUSTOMER role; cannot escalate own role[32m 241[2mms[22m[39m
+[90mstdout[2m | src/tests/phase2-auth.test.ts[2m > [22m[2mPhase 2: Authentication, Roles and Authorization Tests[2m > [22m[2mOTP Service Logic & Database Rules[2m > [22m[2menforces IP rate limits for OTP requests and verification attempts
+[22m[39m[ConsoleOtpSender] OTP for +919870000009 (+91******0009): 118520
+
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mOTP Service Logic & Database Rules[2m > [22menforces IP rate limits for OTP requests and verification attempts[33m 3444[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mnew phone login creates a CUSTOMER role; cannot escalate own role[32m 240[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mexisting barber logging in keeps BARBER role[32m 119[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mdeactivated user cannot log in and has null access[32m 240[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mdeactivated user cannot log in and has null access[32m 245[2mms[22m[39m
  [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22madmin approve action verifies pending salon, making it visible publicly; suspend hides it[33m 1535[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mprevents mass-assignment / role escalation on account update: role field is stripped and remains CUSTOMER[33m 484[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22menforces immediate deactivation via getCurrentUser: active user returns profile, deactivated user returns null[33m 720[2mms[22m[39m
- [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mcreates new users with default language "en" matching schema.prisma definition[32m 240[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mprevents mass-assignment / role escalation on account update: role field is stripped and remains CUSTOMER[33m 455[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22menforces immediate deactivation via getCurrentUser: active user returns profile, deactivated user returns null[33m 680[2mms[22m[39m
+ [32m✓[39m src/tests/phase2-auth.test.ts[2m > [22mPhase 2: Authentication, Roles and Authorization Tests[2m > [22mIntegration Flow & Database Role Verification[2m > [22mcreates new users with default language "en" matching schema.prisma definition[32m 221[2mms[22m[39m
 [90mstdout[2m | src/tests/db-constraints.test.ts[2m > [22m[2mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22m[2mrejects two overlapping active bookings for the same barber with Postgres error 23P01
 [22m[39mprisma:error 
 Invalid `db.booking.create()` invocation in
@@ -125,9 +218,9 @@ D:\Indian-salon-booking\src\tests\db-constraints.test.ts:91:24
 Error occurred during query execution:
 ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "23P01", message: "conflicting key value violates exclusion constraint \"booking_no_overlap\"", severity: "ERROR", detail: Some("Key (\"barberId\", tstzrange(\"startsAt\", \"endsAt\", '[)'::text))=(cmvy1xhh60017vbjoap8izvv2, [\"2099-01-15 10:30:00+00\",\"2099-01-15 11:15:00+00\")) conflicts with existing key (\"barberId\", tstzrange(\"startsAt\", \"endsAt\", '[)'::text))=(cmvy1xhh60017vbjoap8izvv2, [\"2099-01-15 10:00:00+00\",\"2099-01-15 10:45:00+00\"))."), column: None, hint: None }), transient: false })
 
- [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mrejects two overlapping active bookings for the same barber with Postgres error 23P01[33m 524[2mms[22m[39m
- [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mallows back-to-back bookings where one ends exactly when the next starts[33m 492[2mms[22m[39m
- [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mallows a new booking on a slot that was previously CANCELLED[33m 484[2mms[22m[39m
+ [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mrejects two overlapping active bookings for the same barber with Postgres error 23P01[33m 504[2mms[22m[39m
+ [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mallows back-to-back bookings where one ends exactly when the next starts[33m 480[2mms[22m[39m
+ [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mallows a new booking on a slot that was previously CANCELLED[33m 476[2mms[22m[39m
 [90mstdout[2m | src/tests/db-constraints.test.ts[2m > [22m[2mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22m[2mrejects a booking where endsAt <= startsAt with check constraint error
 [22m[39mprisma:error 
 Invalid `db.booking.create()` invocation in
@@ -138,10 +231,17 @@ D:\Indian-salon-booking\src\tests\db-constraints.test.ts:218:24
   217 try {
 → 218   await db.booking.create(
 Error occurred during query execution:
-ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "23514", message: "new row for relation \"Booking\" violates check constraint \"booking_time_order\"", severity: "ERROR", detail: Some("Failing row contains (cmvzsfdqx000dvbs8qmx9u2ac, 507, 2099-01-15, cmvy1xfzo000bvbjoxvj5lez7, cmvy1xhh60017vbjoap8izvv2, cmvy1xfpi0007vbjoam9be936, null, null, IN_SALON, ONLINE, CONFIRMED, 2099-01-15 16:00:00+00, 2099-01-15 15:30:00+00, 100, null, null, null, null, null, null, null, 2026-11-02 21:45:25.594+00, 2026-11-02 21:45:25.594+00)."), column: None, hint: None }), transient: false })
+ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "23514", message: "new row for relation \"Booking\" violates check constraint \"booking_time_order\"", severity: "ERROR", detail: Some("Failing row contains (cmw3s0mhs000dvbkcv3h0i92j, 507, 2099-01-15, cmvy1xfzo000bvbjoxvj5lez7, cmvy1xhh60017vbjoap8izvv2, cmvy1xfsx0008vbjoq7vk6tem, null, null, IN_SALON, ONLINE, CONFIRMED, 2099-01-15 16:00:00+00, 2099-01-15 15:30:00+00, 100, null, null, null, null, null, null, null, 2026-11-05 16:45:01.793+00, 2026-11-05 16:45:01.793+00)."), column: None, hint: None }), transient: false })
 
- [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mrejects a booking where endsAt <= startsAt with check constraint error[32m 125[2mms[22m[39m
- [32m✓[39m src/tests/phase0-db.test.ts[2m > [22mPhase 0 Database & Constraint Verification[2m > [22mverifies seeded salons, barbers and services exist[33m 344[2mms[22m[39m
+ [32m✓[39m src/tests/db-constraints.test.ts[2m > [22mDatabase Constraints & Exclusion Rules (PostgreSQL Supabase)[2m > [22mrejects a booking where endsAt <= startsAt with check constraint error[32m 121[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Public Salon Queries & Security Verification[2m > [22mreturns verified salons (Sharma Ji Gents Parlour) and strictly excludes pending salons (Royal Ustaad)[33m 743[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Public Salon Queries & Security Verification[2m > [22mgetSalonBySlug returns verified salon and returns null for pending or missing salon[33m 746[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Service Grouping & Calculation Logic[2m > [22mgroups services accurately by ServiceCategory[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Service Grouping & Calculation Logic[2m > [22mcalculates total price and duration accurately for multiple selected service IDs[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Service Grouping & Calculation Logic[2m > [22mreturns zero values when no services are selected[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Time Helpers Verification[2m > [22mformats minutes from midnight into 12-hour AM/PM format[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Time Helpers Verification[2m > [22mcorrectly determines if salon is open or closed based on hours[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase0-db.test.ts[2m > [22mPhase 0 Database & Constraint Verification[2m > [22mverifies seeded salons, barbers and services exist[33m 395[2mms[22m[39m
 [90mstdout[2m | src/tests/phase0-db.test.ts[2m > [22m[2mPhase 0 Database & Constraint Verification[2m > [22m[2mrejects overlapping CONFIRMED bookings with Postgres exclusion constraint 23P01 (booking_no_overlap)
 [22m[39mprisma:error 
 Invalid `db.booking.create()` invocation in
@@ -154,14 +254,27 @@ D:\Indian-salon-booking\src\tests\phase0-db.test.ts:115:24
 Error occurred during query execution:
 ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "23P01", message: "conflicting key value violates exclusion constraint \"booking_no_overlap\"", severity: "ERROR", detail: Some("Key (\"barberId\", tstzrange(\"startsAt\", \"endsAt\", '[)'::text))=(cmvy1xhh60017vbjoap8izvv2, [\"2099-12-31 10:30:00+00\",\"2099-12-31 11:00:00+00\")) conflicts with existing key (\"barberId\", tstzrange(\"startsAt\", \"endsAt\", '[)'::text))=(cmvy1xhh60017vbjoap8izvv2, [\"2099-12-31 10:00:00+00\",\"2099-12-31 10:45:00+00\"))."), column: None, hint: None }), transient: false })
 
- [32m✓[39m src/tests/phase0-db.test.ts[2m > [22mPhase 0 Database & Constraint Verification[2m > [22mrejects overlapping CONFIRMED bookings with Postgres exclusion constraint 23P01 (booking_no_overlap)[32m 267[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Public Salon Queries & Security Verification[2m > [22mreturns verified salons (Sharma Ji Gents Parlour) and strictly excludes pending salons (Royal Ustaad)[33m 778[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Public Salon Queries & Security Verification[2m > [22mgetSalonBySlug returns verified salon and returns null for pending or missing salon[33m 747[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Service Grouping & Calculation Logic[2m > [22mgroups services accurately by ServiceCategory[32m 0[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Service Grouping & Calculation Logic[2m > [22mcalculates total price and duration accurately for multiple selected service IDs[32m 1[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Service Grouping & Calculation Logic[2m > [22mreturns zero values when no services are selected[32m 0[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Time Helpers Verification[2m > [22mformats minutes from midnight into 12-hour AM/PM format[32m 0[2mms[22m[39m
- [32m✓[39m src/tests/phase1-ui.test.ts[2m > [22mPhase 1 Time Helpers Verification[2m > [22mcorrectly determines if salon is open or closed based on hours[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase0-db.test.ts[2m > [22mPhase 0 Database & Constraint Verification[2m > [22mrejects overlapping CONFIRMED bookings with Postgres exclusion constraint 23P01 (booking_no_overlap)[33m 300[2mms[22m[39m
+ [32m✓[39m src/tests/old-names-audit.test.ts[2m > [22mPhase 4A Block C: Old Names & Terminology Audit[2m > [22mscans all repository text files for obsolete terms[32m 68[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m1. Dictionary Key & Placeholder Parity (en.json vs hi.json)[2m > [22men.json and hi.json must have the exact same message keys[32m 2[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m1. Dictionary Key & Placeholder Parity (en.json vs hi.json)[2m > [22mall message values must be non-empty strings[32m 10[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m1. Dictionary Key & Placeholder Parity (en.json vs hi.json)[2m > [22many {placeholder} variables must match between en.json and hi.json[32m 6[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m2. Locale Resolution & Validation[2m > [22mlocales array contains only "en" and "hi"[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m2. Locale Resolution & Validation[2m > [22misValidLocale() correctly identifies valid and invalid locales[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m2. Locale Resolution & Validation[2m > [22mresolveLocale() prioritizes valid cookie over user preference[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m2. Locale Resolution & Validation[2m > [22mresolveLocale() falls back to user language when cookie is missing or invalid[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m2. Locale Resolution & Validation[2m > [22mresolveLocale() falls back to defaultLocale ("en") when both are missing or invalid[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m3. Single-field Entity Fallback (getLocalizedName)[2m > [22mreturns nameHi when locale is "hi" and nameHi exists[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m3. Single-field Entity Fallback (getLocalizedName)[2m > [22mreturns English name when locale is "en" even if nameHi exists[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m3. Single-field Entity Fallback (getLocalizedName)[2m > [22mfalls back to English name when locale is "hi" but nameHi is null or whitespace[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m3. Single-field Entity Fallback (getLocalizedName)[2m > [22mhandles entity without nameHi field gracefully[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m4. Server Error Codes Dictionary Coverage[2m > [22mall system error codes have entries in both en.json and hi.json[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m5. Component Audit: Zero Hardcoded Bilingual Slash Pairs & Old Branding[2m > [22mcontains no forbidden bilingual slash pairings (e.g. " / ") in UI component files[32m 20[2mms[22m[39m
+ [32m✓[39m src/tests/phase3b-i18n.test.ts[2m > [22mPhase 3B: Internationalization (i18n) Suite[2m > [22m5. Component Audit: Zero Hardcoded Bilingual Slash Pairs & Old Branding[2m > [22mcontains no obsolete branding "Indian Salon Booking" in UI component files[32m 17[2mms[22m[39m
+ [32m✓[39m src/tests/i18n-audit.test.ts[2m > [22mPhase 4A Block C: i18n & Devanagari Codebase Audit[2m > [22mC.1: No Devanagari characters ([\u0900-\u097F]) in source code outside allowed files and tests[32m 39[2mms[22m[39m
+ [32m✓[39m src/tests/i18n-audit.test.ts[2m > [22mPhase 4A Block C: i18n & Devanagari Codebase Audit[2m > [22mC.4: Message Count & Dictionary Parity[2m > [22men.json and hi.json have identical keys and non-zero counts[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/i18n-audit.test.ts[2m > [22mPhase 4A Block C: i18n & Devanagari Codebase Audit[2m > [22mC.4: Message Count & Dictionary Parity[2m > [22mAll placeholders match between en.json and hi.json[32m 6[2mms[22m[39m
+ [32m✓[39m src/tests/jsx-attribute-audit.test.ts[2m > [22mPhase 4A Block C: JSX Attribute Literals Audit[2m > [22mensures no hardcoded literal text in user-visible JSX attributes[32m 31[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mgenerates 15-minute grid slots for full day with lead time marking past slots[32m 2[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mhandles split shifts correctly with no slots in between shifts[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mclips barber availability to salon operating hours[32m 0[2mms[22m[39m
@@ -169,14 +282,23 @@ ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(Postgr
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mblocks slots overlapping with TimeOff[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mblocks slots overlapping active bookings, but ignores cancelled bookings[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mreturns empty array when salon is closed or date is out of range[32m 1[2mms[22m[39m
- [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mhandles multi-hour duration (e.g. 75 min and 135 min)[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mhandles multi-hour duration (e.g. 75 min and 135 min)[32m 2[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mboundary back-to-back: slot starting at 10:45 is available when preceding booking ends at 10:45[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mexact closing boundary: 30-min slot ending exactly at closing is allowed; ending at close + 1 min is flagged too_short[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mvarying durations: generates valid slots for 15-minute and 45-minute service durations across regular windows[32m 0[2mms[22m[39m
  [32m✓[39m src/tests/phase3-slots.test.ts[2m > [22mPhase 3: Slot Generation (generateSlots)[2m > [22mday window boundaries: Day 14 returns valid slots; Day 15 returns an empty array [][32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mA.1 - A.9: Honest Data, Plain Errors & Config Gating[2m > [22mA.4: Dev hint gating logic - renders only when APP_ENV !== production AND ALLOW_TEST_OTP === true[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mA.1 - A.9: Honest Data, Plain Errors & Config Gating[2m > [22mA.5: Guaranteed wording is replaced with confirmed token in both languages[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mA.1 - A.9: Honest Data, Plain Errors & Config Gating[2m > [22mA.3: Offline page text does not claim saved bookings remain accessible[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mA.1 - A.9: Honest Data, Plain Errors & Config Gating[2m > [22mA.6: Internal labels replaced with natural human titles[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mA.1 - A.9: Honest Data, Plain Errors & Config Gating[2m > [22mA.7 & A.8: Plain error messages populated with values from booking-config[32m 1[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mA.1 - A.9: Honest Data, Plain Errors & Config Gating[2m > [22mA.9: BRIDAL category is displayed as Groom Styling / दूल्हा स्टाइलिंग[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mB: Terminology & Hindi Spelling Consistency[2m > [22mEnglish uses Barber / Our Barbers (no Master Barber)[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mB: Terminology & Hindi Spelling Consistency[2m > [22mHindi uses उस्ताद for barbers on people-facing screens and removes उस्ताद कारीगर / उस्ताद नाई[32m 0[2mms[22m[39m
+ [32m✓[39m src/tests/phase4a-part1.test.ts[2m > [22mPhase 4A Part 1: Small Fixes & Terminology Verification[2m > [22mB: Terminology & Hindi Spelling Consistency[2m > [22mConsistent Hindi nukta and chandrabindu spellings[32m 1[2mms[22m[39m
 
-[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
-[2m      Tests [22m [1m[32m95 passed[39m[22m[90m (95)[39m
-[2m   Start at [22m 03:14:18
-[2m   Duration [22m 72.02s[2m (transform 246ms, setup 0ms, collect 991ms, tests 69.19s, environment 1ms, prepare 621ms)[22m
+[2m Test Files [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+[2m      Tests [22m [1m[32m158 passed[39m[22m[90m (158)[39m
+[2m   Start at [22m 22:13:09
+[2m   Duration [22m 118.34s[2m (transform 329ms, setup 0ms, collect 1.35s, tests 113.25s, environment 2ms, prepare 1.42s)[22m
 

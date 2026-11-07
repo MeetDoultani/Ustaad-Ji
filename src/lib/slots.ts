@@ -54,6 +54,7 @@ export interface GenerateSlotsParams {
   timeOff: TimeOffInput[];
   bookings: BookingInput[];
   now?: Date;
+  leadTimeMinutes?: number;
 }
 
 /**
@@ -72,6 +73,7 @@ export function generateSlots({
   timeOff,
   bookings,
   now = new Date(),
+  leadTimeMinutes,
 }: GenerateSlotsParams): GeneratedSlot[] {
   if (!dateIst || !/^\d{4}-\d{2}-\d{2}$/.test(dateIst.trim()) || durationMin <= 0) {
     return [];
@@ -123,7 +125,8 @@ export function generateSlots({
   );
 
   const slots: GeneratedSlot[] = [];
-  const minLeadTimeMs = now.getTime() + MIN_LEAD_MIN * 60 * 1000;
+  const effectiveLeadMin = typeof leadTimeMinutes === 'number' ? leadTimeMinutes : MIN_LEAD_MIN;
+  const minLeadTimeMs = now.getTime() + effectiveLeadMin * 60 * 1000;
 
   // 6. Generate candidate slots on a 15-minute grid within each window
   for (const win of windows) {

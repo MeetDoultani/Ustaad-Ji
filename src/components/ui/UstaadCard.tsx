@@ -3,10 +3,11 @@
 import React from 'react';
 import { Barber } from '@prisma/client';
 import { clsx } from 'clsx';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface UstaadCardProps {
   barber: Barber & {
-    services?: { service: { name: string } }[];
+    services?: { service: { name: string; nameHi?: string | null } }[];
   };
   isSelected?: boolean;
   onSelect?: (barberId: string) => void;
@@ -25,11 +26,15 @@ export default function UstaadCard({
   rating = 4.9,
   className,
 }: UstaadCardProps) {
+  const locale = useLocale();
+  const t = useTranslations('barber');
+  const tCard = useTranslations('rateCard');
+
   // Extract specialties from services if available
   const specialities =
     barber.services && barber.services.length > 0
-      ? barber.services.slice(0, 3).map((s) => s.service.name)
-      : ['Hair Art', 'Hot Towel Shave', 'Head Massage'];
+      ? barber.services.slice(0, 3).map((s) => (locale === 'hi' && s.service.nameHi ? s.service.nameHi : s.service.name))
+      : [t('defaultSpecialty1'), t('defaultSpecialty2'), t('defaultSpecialty3')];
 
   return (
     <div
@@ -40,7 +45,7 @@ export default function UstaadCard({
         className
       )}
     >
-      {/* Ornate Indian Salon Mirror Frame */}
+      {/* Ornate Mirror Frame */}
       <div
         className={clsx(
           'w-full max-w-[280px] rounded-t-[40px] rounded-b-md border-4 p-2 transition-all',
@@ -51,9 +56,9 @@ export default function UstaadCard({
       >
         {/* Inner Gold Foil Trim */}
         <div className="rounded-t-[32px] rounded-b-sm border-2 border-marigold/80 p-3 bg-paper flex flex-col items-center">
-          {/* Mirror Crown Accent */}
-          <div className="mb-2 text-maroon font-sign text-xs tracking-widest uppercase">
-            ✦ Ustaad / उस्ताद ✦
+          {/* Mirror Crown Accent: Single Language */}
+          <div className="mb-2 text-maroon font-sign text-sm tracking-normal uppercase">
+            {t('badge')}
           </div>
 
           {/* Photo / Avatar with Arch Border */}
@@ -81,7 +86,7 @@ export default function UstaadCard({
                   : 'bg-marigold text-ink'
               )}
             >
-              {isAvailableNow ? 'FREE' : 'BUSY'}
+              {isAvailableNow ? t('statusFree') : t('statusBusy')}
             </span>
           </div>
 
@@ -91,7 +96,7 @@ export default function UstaadCard({
           </h4>
 
           <div className="flex items-center gap-2 mt-1 text-xs font-body text-steel">
-            <span>{barber.experienceYears}+ years exp.</span>
+            <span>{t('experience', { years: barber.experienceYears })}</span>
             <span>•</span>
             <span className="font-token text-ink font-bold">★ {rating.toFixed(1)}</span>
           </div>
@@ -118,10 +123,10 @@ export default function UstaadCard({
             )}
           >
             {isAvailableNow
-              ? '● Available Now / अभी खाली'
+              ? `● ${t('available')}`
               : nextFreeTime
-              ? `Next free: ${nextFreeTime}`
-              : 'Next free in ~25 min'}
+              ? t('nextFreeAt', { time: nextFreeTime })
+              : t('nextFreeApprox')}
           </div>
 
           {/* Action / Select Button */}
@@ -129,13 +134,13 @@ export default function UstaadCard({
             <button
               type="button"
               className={clsx(
-                'w-full min-h-[40px] font-label font-bold text-xs uppercase tracking-wider border-2 transition-all',
+                'w-full min-h-[40px] font-label font-bold text-xs uppercase tracking-normal border-2 transition-all rounded-md',
                 isSelected
                   ? 'bg-marigold text-ink border-ink shadow-[2px_2px_0px_#2B2118]'
                   : 'bg-paper text-maroon border-maroon hover:bg-marigold hover:text-ink'
               )}
             >
-              {isSelected ? '✓ Selected / चुना' : 'Select / चुनें'}
+              {isSelected ? `✓ ${tCard('selected')}` : tCard('book')}
             </button>
           )}
         </div>

@@ -112,7 +112,7 @@ export async function getAvailableSlots({
     return {
       ok: false,
       code: 'NOT_FOUND',
-      message: 'Barber upalabdh nahi hai.',
+      message: 'Barber is not available.',
     };
   }
 
@@ -125,7 +125,7 @@ export async function getAvailableSlots({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Kuch chuni gayi services yeh barber perform nahi karte.',
+      message: 'Some selected services are not offered by this barber.',
     };
   }
 
@@ -203,7 +203,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Duplicate services chuni gayi hain.',
+      message: 'Duplicate services selected.',
     };
   }
 
@@ -218,7 +218,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Time slot 15 minute ke interval par hona chahiye (jaise 10:00, 10:15).',
+      message: 'Please pick a time from the list.',
     };
   }
 
@@ -227,7 +227,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Kam se kam 15 minute pehle ka slot book karein.',
+      message: `Please pick a time at least ${MIN_LEAD_MIN} minutes from now.`,
     };
   }
 
@@ -237,7 +237,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: `Aap maximum ${MAX_ADVANCE_DAYS} din aage tak ka slot book kar sakte hain.`,
+      message: `Bookings are only allowed up to ${MAX_ADVANCE_DAYS} days in advance.`,
     };
   }
 
@@ -250,7 +250,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'UNAUTHORIZED',
-      message: 'Customer booking ke liye customer account se login karein.',
+      message: 'Please log in as a customer to book.',
     };
   }
 
@@ -268,7 +268,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'ACTIVE_LIMIT_EXCEEDED',
-      message: 'Aapke paas pehle se 5 active bookings hain.',
+      message: `You already have ${MAX_ACTIVE_BOOKINGS_PER_CUSTOMER} active bookings.`,
     };
   }
 
@@ -285,7 +285,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Aap 1 ghante mein 5 se zyada booking nahi bana sakte.',
+      message: `You cannot create more than ${MAX_BOOKINGS_CREATED_PER_HOUR} bookings in one hour.`,
     };
   }
 
@@ -297,7 +297,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'NOT_FOUND',
-      message: 'Salon uplabdh nahi hai.',
+      message: 'Salon is not available.',
     };
   }
 
@@ -318,7 +318,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'NOT_FOUND',
-      message: 'Barber uplabdh nahi hai ya is salon se nahi juda hai.',
+      message: 'Barber is not available or not associated with this salon.',
     };
   }
 
@@ -330,7 +330,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Kuch services is salon ya barber ke paas uplabdh nahi hain.',
+      message: 'Some services are not available for this salon or barber.',
     };
   }
 
@@ -345,7 +345,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Salon is din band hai.',
+      message: 'Salon is closed on this day.',
     };
   }
   const slotStartMin = minutesFromMidnight;
@@ -354,7 +354,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Chuna gaya slot salon ke khulne ke samay se bahar hai.',
+      message: 'Selected time is outside salon operating hours.',
     };
   }
   const isWithinBarberAvailability = barber.availability.some(
@@ -364,7 +364,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Chuna gaya slot barber ke working hours se bahar hai.',
+      message: 'Selected time is outside barber working hours.',
     };
   }
 
@@ -382,7 +382,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'CUSTOMER_OVERLAP',
-      message: 'Aapka is samay kisi doosre salon ya barber ke saath pehle se appointment hai.',
+      message: 'You already have another active appointment overlapping this time.',
     };
   }
 
@@ -511,7 +511,7 @@ export async function createBooking({
       return {
         ok: false,
         code: 'CUSTOMER_OVERLAP',
-        message: 'Aapka is samay kisi doosre salon ya barber ke saath pehle se appointment hai.',
+        message: 'You already have another active appointment overlapping this time.',
       };
     }
 
@@ -525,7 +525,7 @@ export async function createBooking({
       return {
         ok: false,
         code: 'SLOT_TAKEN',
-        message: 'Yeh slot bhar gaya hai, kripya doosra time chuniye.',
+        message: 'This slot is already booked. Please choose another time.',
       };
     }
 
@@ -534,7 +534,7 @@ export async function createBooking({
     return {
       ok: false,
       code: 'UNKNOWN_ERROR',
-      message: 'Booking banate samay samasya aayi. Kripya punah prayas karein.',
+      message: 'Could not create booking. Please try again.',
     };
   }
 }
@@ -566,7 +566,7 @@ export async function cancelBooking({
     return {
       ok: false,
       code: 'NOT_FOUND',
-      message: 'Booking nahi mili.',
+      message: 'Booking not found.',
     };
   }
 
@@ -583,7 +583,7 @@ export async function cancelBooking({
     return {
       ok: false,
       code: 'NOT_FOUND', // Uniform 404 for security
-      message: 'Booking nahi mili.',
+      message: 'Booking not found.',
     };
   }
 
@@ -596,17 +596,17 @@ export async function cancelBooking({
     return {
       ok: false,
       code: 'INVALID_STATUS',
-      message: 'Yeh booking pehle se complete ya cancel ho chuki hai.',
+      message: "This booking can't be changed right now.",
     };
   }
 
-  // Staff cancellations bypass the customer 60-min cutoff, but MUST provide a non-empty reason
+  // Staff cancellations bypass the customer 60-min cutoff, but MUST provide a reason (3 to 200 characters)
   if (actor.role !== Role.CUSTOMER) {
-    if (!reason || reason.trim().length === 0) {
+    if (!reason || reason.trim().length < 3 || reason.trim().length > 200) {
       return {
         ok: false,
         code: 'INVALID_INPUT',
-        message: 'Staff cancellation ke liye reason likhna zaroori hai.',
+        message: 'Cancellation reason is required (3 to 200 characters).',
       };
     }
   } else {
@@ -616,7 +616,7 @@ export async function cancelBooking({
       return {
         ok: false,
         code: 'CUTOFF_PASSED',
-        message: 'Appointment shuru hone ke 1 ghante pehle tak hi cancel kiya ja sakta hai.',
+        message: `Bookings can only be cancelled up to ${CANCEL_CUTOFF_MIN} minutes before start time.`,
       };
     }
   }
@@ -680,7 +680,7 @@ export async function rescheduleBooking({
     return {
       ok: false,
       code: 'NOT_FOUND',
-      message: 'Booking nahi mili.',
+      message: 'Booking not found.',
     };
   }
 
@@ -697,7 +697,7 @@ export async function rescheduleBooking({
     return {
       ok: false,
       code: 'NOT_FOUND',
-      message: 'Booking nahi mili.',
+      message: 'Booking not found.',
     };
   }
 
@@ -709,7 +709,7 @@ export async function rescheduleBooking({
     return {
       ok: false,
       code: 'INVALID_STATUS',
-      message: 'Kewal active bookings ko reschedule kiya ja sakta hai.',
+      message: "This booking can't be changed right now.",
     };
   }
 
@@ -720,7 +720,7 @@ export async function rescheduleBooking({
       return {
         ok: false,
         code: 'CUTOFF_PASSED',
-        message: 'Reschedule ke liye appointment se kam se kam 1 ghanta pehle request karein.',
+        message: `Bookings can only be rescheduled up to ${CANCEL_CUTOFF_MIN} minutes before start time.`,
       };
     }
   }
@@ -740,7 +740,7 @@ export async function rescheduleBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Time slot 15 minute ke interval par hona chahiye.',
+      message: 'Please pick a time from the list.',
     };
   }
 
@@ -749,7 +749,7 @@ export async function rescheduleBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: 'Kam se kam 15 minute pehle ka slot chuniye.',
+      message: `Please pick a time at least ${MIN_LEAD_MIN} minutes from now.`,
     };
   }
 
@@ -759,7 +759,7 @@ export async function rescheduleBooking({
     return {
       ok: false,
       code: 'INVALID_INPUT',
-      message: `Aap maximum ${MAX_ADVANCE_DAYS} din aage tak ka slot book kar sakte hain.`,
+      message: `Bookings are only allowed up to ${MAX_ADVANCE_DAYS} days in advance.`,
     };
   }
 
@@ -894,7 +894,7 @@ export async function rescheduleBooking({
       return {
         ok: false,
         code: 'CUSTOMER_OVERLAP',
-        message: 'Aapka is samay kisi doosre appointment ke saath conflict hai.',
+        message: 'You already have another appointment overlapping this time.',
       };
     }
 
@@ -908,16 +908,15 @@ export async function rescheduleBooking({
       return {
         ok: false,
         code: 'SLOT_TAKEN',
-        message: 'Yeh slot bhar gaya hai, kripya doosra time chuniye.',
+        message: 'This slot is already booked. Please choose another time.',
       };
     }
-
 
     console.error('Failed to reschedule booking:', error);
     return {
       ok: false,
       code: 'UNKNOWN_ERROR',
-      message: 'Reschedule karte samay samasya aayi. Kripya punah prayas karein.',
+      message: 'Could not reschedule booking. Please try again.',
     };
   }
 }
