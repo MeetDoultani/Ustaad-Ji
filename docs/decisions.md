@@ -353,3 +353,17 @@ Where earlier documents or specifications differed, Phase 4A prompt directives t
 3. **Server-Side Phone Privacy:**
    - Phone numbers returned in `getRegisterBookings` DTOs are masked on the server (`maskPhoneForRegister`) as `+91 ******3210` before serialization to client components.
    - Full, unmasked phone numbers are strictly restricted to authorized staff viewing individual booking details in `getBookingDetailStaff` (/dashboard/bookings/[id]) to power the direct click-to-call action.
+
+---
+
+## Phase 4B-1: Staff Configuration Rate Limiting and Concurrency Architecture
+1. **Staff Edit Rate Limiting (`EDIT_LIMIT`):**
+   - An in-memory sliding window rate limit of 60 edit actions per staff user per hour is enforced on all staff configuration mutations (services, salon hours, barber availability, time off).
+   - This is tracked per-server-instance in `src/lib/rate-limit.ts` using key `staff_edit:${staffUserId}`.
+   - **Production Requirement:** Before multi-instance production deployment, this counter must transition to a shared distributed store (such as Upstash Redis or Redis sliding-window zset).
+2. **Deterministic Testing Architecture:**
+   - All date/time calculations, validators, conflict detectors, and rate-limit checks accept an explicit optional `now` parameter (defaulting to the current time). Tests inject deterministic timestamps to ensure zero flake and complete test reproducibility regardless of the system clock.
+3. **Availability Concurrency Protection:**
+   - Barber availability updates lock the target `Barber` row using parameterized tagged-template `SELECT id FROM "Barber" WHERE id = ${barberId} FOR UPDATE;` inside an interactive database transaction before clearing and recreating shifts. This completely eliminates race conditions and overlapping availability windows under concurrent requests.
+4. **Rate Card Physical Aesthetic:**
+   - The service editor models the physical painted rate card board (`RateCardBoard` visual metaphor) grouped by `ServiceCategory`, with soft-delete toggle (`isActive = false`) and manual reordering controls (`sortOrder`) in lieu of generic SaaS data tables.

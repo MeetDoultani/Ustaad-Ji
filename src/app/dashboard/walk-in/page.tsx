@@ -2,7 +2,7 @@ import React from 'react';
 import { requireRole } from '@/lib/auth-server';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { SignboardHeader } from '@/components/ui';
+import { SignboardHeader, StaffDashboardNav } from '@/components/ui';
 import { getStaffDashboardContext } from '@/lib/dashboard-service';
 import { getTranslations } from 'next-intl/server';
 import WalkInClient from './WalkInClient';
@@ -62,6 +62,11 @@ export default async function WalkInPage(props: WalkInPageProps) {
       <SignboardHeader />
 
       <main className="max-w-4xl mx-auto w-full p-4 sm:p-6 flex-1 space-y-6">
+        <StaffDashboardNav
+          currentTab="walk-in"
+          role={context.role}
+          salonId={context.salon.id}
+        />
         <WalkInClient
           userRole={context.role}
           salon={context.salon}

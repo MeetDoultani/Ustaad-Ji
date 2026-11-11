@@ -276,3 +276,54 @@ export function canCreateWalkIn(
 
   return false;
 }
+
+/**
+ * Authorization: Manage salon services, rate card, and service catalog.
+ * Allowed: OWNER of that specific salon only.
+ * Denied: Barbers, other salon owners, customers, admins.
+ */
+export function canManageSalonServices(
+  user: PolicyUser | null | undefined,
+  salon: PolicySalon | null | undefined
+): boolean {
+  if (!isValidUser(user) || !salon) return false;
+  return user.role === Role.OWNER && user.id === salon.ownerId;
+}
+
+/**
+ * Authorization: Manage salon weekly operating schedule and hours.
+ * Allowed: OWNER of that specific salon only.
+ * Denied: Barbers, other salon owners, customers, admins.
+ */
+export function canManageSalonHours(
+  user: PolicyUser | null | undefined,
+  salon: PolicySalon | null | undefined
+): boolean {
+  if (!isValidUser(user) || !salon) return false;
+  return user.role === Role.OWNER && user.id === salon.ownerId;
+}
+
+/**
+ * Authorization: Manage barber working shifts (availability) and time-off in staff dashboard.
+ * Allowed: The barber themselves (own schedule only), or owner of the barber's salon.
+ * Denied: Barbers editing another barber, other salon owners, customers, admins.
+ */
+export function canManageStaffBarberSchedule(
+  user: PolicyUser | null | undefined,
+  barber: PolicyBarber | null | undefined
+): boolean {
+  if (!isValidUser(user) || !barber) return false;
+
+  if (
+    user.role === Role.BARBER &&
+    (user.id === barber.userId || user.id === barber.id)
+  ) {
+    return true;
+  }
+
+  if (user.role === Role.OWNER && user.id === barber.salonOwnerId) {
+    return true;
+  }
+
+  return false;
+}

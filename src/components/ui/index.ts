@@ -10,3 +10,4 @@ export { default as RegisterDiarySlotPicker } from './RegisterDiarySlotPicker';
 export { default as TokenSlip } from './TokenSlip';
 export { default as LiveQueueBoard } from './LiveQueueBoard';
 export { default as LanguagePickerOverlay } from './LanguagePickerOverlay';
+export { default as StaffDashboardNav } from './StaffDashboardNav';

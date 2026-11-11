@@ -14,9 +14,9 @@ const store = new Map<string, RateLimitRecord>();
 // Cleanup stale keys every 5 minutes to prevent memory leak
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
-    const now = Date.now();
+    const currentTime = Date.now();
     for (const [key, record] of store.entries()) {
-      record.timestamps = record.timestamps.filter((ts) => now - ts < 3600 * 1000);
+      record.timestamps = record.timestamps.filter((ts) => currentTime - ts < 3600 * 1000);
       if (record.timestamps.length === 0) {
         store.delete(key);
       }
@@ -27,9 +27,9 @@ if (typeof setInterval !== 'undefined') {
 export function checkRateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  now: number = Date.now()
 ): { allowed: boolean; remaining: number; retryAfterMs: number } {
-  const now = Date.now();
   const record = store.get(key) || { timestamps: [] };
 
   // Filter out timestamps outside the sliding window

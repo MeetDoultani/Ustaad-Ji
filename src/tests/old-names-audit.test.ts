@@ -61,6 +61,8 @@ describe('Phase 4A Block C: Old Names & Terminology Audit', () => {
     'docs/phase2-report.md': 'Historical Phase 2 completion and verification report.',
     'docs/phase3-report.md': 'Historical Phase 3 completion and verification report.',
     'docs/phase3b-report.md': 'Historical Phase 3B completion and verification report.',
+    'docs/phase4b1-report.md': 'Phase 4B-1 completion and verification report.',
+    'docs/phase4b1-prompt.md': 'Phase 4B-1 prompt specification document.',
     'docs/supabase-migration-report.md': 'Historical Supabase database migration report.',
     'prisma/schema.prisma': 'Rule 2 schema lock prevents modifying top-line file comment.',
     'src/tests/old-names-audit.test.ts': 'Audit test containing pattern definitions and regex strings.',

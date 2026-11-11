@@ -43,6 +43,18 @@ This document serves as the authoritative translation guide for **Ustaad-Ji**. I
 | **Head Massage** | Head Massage | सिर मालिश (चम्पी) | Resonant, deeply traditional Indian grooming tradition ("champi"). |
 | **Home Visit** | Home Visit | घर पर सेवा | Direct, unmistakable translation for doorstep grooming. |
 | **Language Preference** | Language | भाषा प्राथमिकता | Clean profile settings label. |
+| **Rate Card & Services** | Rate Card & Services | रेट कार्ड व सेवाएँ | Staff dashboard services and rates catalog. |
+| **Opening Hours** | Opening Hours | खुलने का समय | Weekly salon operating schedule. |
+| **Working Hours** | Working Hours | काम का समय | Barber chair availability shifts. |
+| **Time Off** | Time Off | छुट्टी | Barber scheduled leaves and breaks. |
+| **Closed** | Closed | बंद | Indicator for non-operational weekday. |
+| **Hidden** | Hidden | छिपा हुआ | Soft-deleted / inactive service state. |
+| **Save** | Save | सहेजें | Form submission action. |
+| **Active & Visible** | Active & Visible | सक्रिय व दृश्य | Active service toggle state. |
+| **Move Up / Down** | Move Up / Move Down | ऊपर करें / नीचे करें | Service ordering controls. |
+| **Reactivate** | Reactivate | पुनः सक्रिय करें | Reactivate hidden service. |
+| **Copy to All Days** | Copy to All Days | सभी दिनों पर लागू करें | Multi-day schedule helper. |
+| **Schedule Conflict Notice** | Schedule Conflicts Notice | शेड्यूल टकराव की सूचना | Non-blocking schedule collision banner. |
 
 ---
 

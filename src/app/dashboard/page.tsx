@@ -1,7 +1,7 @@
 import React from 'react';
 import { requireRole } from '@/lib/auth-server';
 import { Role } from '@prisma/client';
-import { SignboardHeader, BarberPoleDivider } from '@/components/ui';
+import { SignboardHeader, BarberPoleDivider, StaffDashboardNav } from '@/components/ui';
 import { getTranslations, getLocale } from 'next-intl/server';
 import {
   getStaffDashboardContext,
@@ -88,6 +88,12 @@ export default async function DashboardPage(props: DashboardPageProps) {
       <SignboardHeader />
 
       <main className="max-w-6xl mx-auto w-full p-4 sm:p-6 flex-1 space-y-6">
+        <StaffDashboardNav
+          currentTab="register"
+          role={context.role}
+          salonId={context.salon.id}
+        />
+
         {/* Welcome Board */}
         <div className="bg-tealDeep text-chalk p-6 border-4 border-maroon shadow-[5px_5px_0px_#2B2118] rounded-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-marigold/40 pb-4 mb-3">
