@@ -316,7 +316,7 @@ export function canManageStaffBarberSchedule(
 
   if (
     user.role === Role.BARBER &&
-    (user.id === barber.userId || user.id === barber.id)
+    user.id === barber.userId
   ) {
     return true;
   }

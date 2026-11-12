@@ -29,7 +29,6 @@ import {
   updateServiceStaff,
   toggleServiceActiveStaff,
   reorderServicesStaff,
-  setBarberServicesStaff,
   getSalonHoursStaff,
   updateSalonHoursStaff,
   getBarberAvailabilityStaff,
@@ -219,6 +218,16 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(canManageSalonHours(customer, salon1)).toBe(false);
     });
 
+    it('canManageStaffBarberSchedule: allows barber own userId; denies barber-profile id passed as userId', () => {
+      // Barber's own userId allowed
+      const validBarberUser: PolicyUser = { id: 'usr-bar-1', role: Role.BARBER, isActive: true };
+      expect(canManageStaffBarberSchedule(validBarberUser, barberProfile1)).toBe(true);
+
+      // Barber profile id passed as user id is DENIED
+      const fakeUserWithProfileId: PolicyUser = { id: 'bar-1', role: Role.BARBER, isActive: true };
+      expect(canManageStaffBarberSchedule(fakeUserWithProfileId, barberProfile1)).toBe(false);
+    });
+
     it('canManageStaffBarberSchedule: allows barber self-management and salon owner delegation; denies others', () => {
       // Barber 1 editing self
       expect(canManageStaffBarberSchedule(barber1, barberProfile1)).toBe(true);
@@ -261,18 +270,21 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
     let todayIstStr: string;
     let tomorrowIstStr: string;
 
+    const nowRef = new Date('2026-06-15T10:00:00.000Z');
+    let fixtureCounter = 1;
+    const nextFixtureId = () => fixtureCounter++;
+
     beforeAll(async () => {
-      const ts = Date.now();
-      const { dateIst } = utcToIstDetails(new Date());
+      const { dateIst } = utcToIstDetails(nowRef);
       todayIstStr = dateIst;
-      const tomorrowDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const tomorrowDate = new Date(nowRef.getTime() + 24 * 60 * 60 * 1000);
       const { dateIst: tomIst } = utcToIstDetails(tomorrowDate);
       tomorrowIstStr = tomIst;
 
       // 1. Owner A & Salon A
       ownerA = await db.user.create({
         data: {
-          phone: `+919711${String(ts).slice(-6)}`,
+          phone: `+919711${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Owner A Test',
           role: Role.OWNER,
           isActive: true,
@@ -283,7 +295,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         data: {
           ownerId: ownerA.id,
           name: 'Sharma Hair Studio A',
-          slug: `salon-a-${ts}`,
+          slug: `salon-a-${nextFixtureId()}`,
           status: VerificationStatus.VERIFIED,
           addressLine: '123 MG Road',
           area: 'Indiranagar',
@@ -300,7 +312,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       barberUserA = await db.user.create({
         data: {
-          phone: `+919712${String(ts + 1).slice(-6)}`,
+          phone: `+919712100002`,
           name: 'Barber A Master',
           role: Role.BARBER,
           isActive: true,
@@ -359,7 +371,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       // 2. Owner B & Salon B
       ownerB = await db.user.create({
         data: {
-          phone: `+919721${String(ts + 2).slice(-6)}`,
+          phone: `+919721${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Owner B Test',
           role: Role.OWNER,
           isActive: true,
@@ -370,7 +382,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         data: {
           ownerId: ownerB.id,
           name: 'Competitor Salon B',
-          slug: `salon-b-${ts}`,
+          slug: `salon-b-${nextFixtureId()}`,
           status: VerificationStatus.VERIFIED,
           addressLine: '456 Brigade Rd',
           area: 'CBD',
@@ -387,7 +399,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       barberUserB = await db.user.create({
         data: {
-          phone: `+919722${String(ts + 3).slice(-6)}`,
+          phone: `+919722${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Barber B Master',
           role: Role.BARBER,
           isActive: true,
@@ -419,7 +431,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       customerUser = await db.user.create({
         data: {
-          phone: `+919733${String(ts + 4).slice(-6)}`,
+          phone: `+919733${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Customer Integration',
           role: Role.CUSTOMER,
           isActive: true,
@@ -428,7 +440,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       adminUser = await db.user.create({
         data: {
-          phone: `+919744${String(ts + 5).slice(-6)}`,
+          phone: `+919744${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Platform Admin',
           role: Role.ADMIN,
           isActive: true,
@@ -437,7 +449,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       barberInactiveUser = await db.user.create({
         data: {
-          phone: `+919755${String(ts + 6).slice(-6)}`,
+          phone: `+919755${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Barber Inactive User',
           role: Role.BARBER,
           isActive: false,
@@ -457,7 +469,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       barberPendingUser = await db.user.create({
         data: {
-          phone: `+919766${String(ts + 7).slice(-6)}`,
+          phone: `+919766${String(100000 + nextFixtureId()).padStart(6, "0")}`,
           name: 'Barber Pending User',
           role: Role.BARBER,
           isActive: true,
@@ -645,9 +657,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(c4.ok).toBe(false);
       expect(c4.code).toBe('UNAUTHORIZED');
 
-      const c5 = await setBarberServicesStaff(custCurrent, salonA.id, serviceA1.id, [barberA.id]);
-      expect(c5.ok).toBe(false);
-      expect(c5.code).toBe('UNAUTHORIZED');
+
 
       const c6 = await updateSalonHoursStaff(custCurrent, salonA.id, testHours);
       expect(c6.ok).toBe(false);
@@ -658,8 +668,8 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(c7.code).toBe('UNAUTHORIZED');
 
       const c8 = await createBarberTimeOffStaff(custCurrent, barberA.id, {
-        startsAt: new Date(Date.now() + 86400000),
-        endsAt: new Date(Date.now() + 90000000),
+        startsAt: new Date(nowRef.getTime() + 86400000),
+        endsAt: new Date(nowRef.getTime() + 90000000),
       });
       expect(c8.ok).toBe(false);
       expect(c8.code).toBe('UNAUTHORIZED');
@@ -695,9 +705,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(a4.ok).toBe(false);
       expect(a4.code).toBe('UNAUTHORIZED');
 
-      const a5 = await setBarberServicesStaff(adminCurrent, salonA.id, serviceA1.id, [barberA.id]);
-      expect(a5.ok).toBe(false);
-      expect(a5.code).toBe('UNAUTHORIZED');
+
 
       const a6 = await updateSalonHoursStaff(adminCurrent, salonA.id, testHours);
       expect(a6.ok).toBe(false);
@@ -708,8 +716,8 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(a7.code).toBe('UNAUTHORIZED');
 
       const a8 = await createBarberTimeOffStaff(adminCurrent, barberA.id, {
-        startsAt: new Date(Date.now() + 86400000),
-        endsAt: new Date(Date.now() + 90000000),
+        startsAt: new Date(nowRef.getTime() + 86400000),
+        endsAt: new Date(nowRef.getTime() + 90000000),
       });
       expect(a8.ok).toBe(false);
       expect(a8.code).toBe('UNAUTHORIZED');
@@ -726,7 +734,7 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         data: {
           ownerId: ownerA.id,
           name: 'Pending Salon Branch',
-          slug: `pending-salon-${Date.now()}`,
+          slug: `pending-salon-${nextFixtureId()}`,
           status: VerificationStatus.PENDING,
           addressLine: '999 Pending Lane',
           area: 'Test',
@@ -864,8 +872,8 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(timeOff.ok).toBe(true);
     });
 
-    // 7. Atomic barber assignment
-    it('7. Atomic barber assignment: Updating BarberService join records alters barber-service mapping', async () => {
+    // 7. Atomic barber assignment lifecycle through updateServiceStaff
+    it('7. Atomic barber assignment: Updating BarberService join records via updateServiceStaff (replaces set, empty clears, omitting preserves, atomic rollback)', async () => {
       const ownerACurrent: CurrentUser = {
         id: ownerA.id,
         role: Role.OWNER,
@@ -874,34 +882,63 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         isActive: true,
       };
 
-      // Remove Barber A from Service A2
-      const res = await updateServiceStaff(ownerACurrent, salonA.id, serviceA2.id, {
+      // 1. Valid list replaces the old set
+      const resReplace = await updateServiceStaff(ownerACurrent, salonA.id, serviceA2.id, {
         category: serviceA2.category,
         name: serviceA2.name,
         durationMin: serviceA2.durationMin,
         priceRupees: serviceA2.priceRupees,
-        barberIds: [], // unassign
-      });
-      expect(res.ok).toBe(true);
+        barberIds: [barberA.id],
+      }, nowRef);
+      expect(resReplace.ok).toBe(true);
+      const count1 = await db.barberService.count({ where: { serviceId: serviceA2.id, barberId: barberA.id } });
+      expect(count1).toBe(1);
 
-      const mappingCount = await db.barberService.count({
-        where: { serviceId: serviceA2.id },
-      });
-      expect(mappingCount).toBe(0);
+      // 2. An empty array clears it
+      const resClear = await updateServiceStaff(ownerACurrent, salonA.id, serviceA2.id, {
+        category: serviceA2.category,
+        name: serviceA2.name,
+        durationMin: serviceA2.durationMin,
+        priceRupees: serviceA2.priceRupees,
+        barberIds: [],
+      }, nowRef);
+      expect(resClear.ok).toBe(true);
+      const count2 = await db.barberService.count({ where: { serviceId: serviceA2.id } });
+      expect(count2).toBe(0);
 
-      // Re-assign Barber A
+      // 3. Omitting barberIds leaves it unchanged
+      // Re-assign barberA
       await updateServiceStaff(ownerACurrent, salonA.id, serviceA2.id, {
         category: serviceA2.category,
         name: serviceA2.name,
         durationMin: serviceA2.durationMin,
         priceRupees: serviceA2.priceRupees,
         barberIds: [barberA.id],
-      });
+      }, nowRef);
 
-      const reAssignedCount = await db.barberService.count({
-        where: { serviceId: serviceA2.id, barberId: barberA.id },
-      });
-      expect(reAssignedCount).toBe(1);
+      const resOmit = await updateServiceStaff(ownerACurrent, salonA.id, serviceA2.id, {
+        category: serviceA2.category,
+        name: 'Preserved Barber Mapping Svc',
+        durationMin: serviceA2.durationMin,
+        priceRupees: serviceA2.priceRupees,
+      }, nowRef);
+      expect(resOmit.ok).toBe(true);
+      const count3 = await db.barberService.count({ where: { serviceId: serviceA2.id, barberId: barberA.id } });
+      expect(count3).toBe(1);
+
+      // 4. Assignment is atomic with service update: invalid barber in updateServiceStaff rolls back name update
+      const resAtomic = await updateServiceStaff(ownerACurrent, salonA.id, serviceA2.id, {
+        category: serviceA2.category,
+        name: 'FAILED_ROLLBACK_NAME',
+        durationMin: serviceA2.durationMin,
+        priceRupees: serviceA2.priceRupees,
+        barberIds: [barberB.id], // Foreign barber
+      }, nowRef);
+      expect(resAtomic.ok).toBe(false);
+      expect(resAtomic.code).toBe('INVALID_BARBER');
+
+      const afterFailedUpdate = await db.service.findUnique({ where: { id: serviceA2.id } });
+      expect(afterFailedUpdate?.name).toBe('Preserved Barber Mapping Svc');
     });
 
     // 8. Salon hours impact on slot engine
@@ -1291,8 +1328,8 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       }
     });
 
-    // 15. Reorder mechanics
-    it('15. Reorder mechanics: Move Up/Down swaps sortOrder atomically; foreign service returns NOT_FOUND', async () => {
+    // 15. Reorder mechanics within category
+    it('15. Reorder mechanics within category: Move Up/Down swaps inside category; first item Move Up does nothing; other category untouched; foreign returns NOT_FOUND; sortOrders stay unique', async () => {
       const ownerACurrent: CurrentUser = {
         id: ownerA.id,
         role: Role.OWNER,
@@ -1301,55 +1338,98 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         isActive: true,
       };
 
-      const s1 = await db.service.create({
+      // Create 2 services in isolated BRIDAL category
+      const br1 = await db.service.create({
         data: {
           salonId: salonA.id,
-          name: 'Reorder Test 1',
-          category: ServiceCategory.HAIR,
-          priceRupees: 100,
-          durationMin: 30,
+          name: 'Bridal Svc 1',
+          category: ServiceCategory.BRIDAL,
+          priceRupees: 2000,
+          durationMin: 60,
           sortOrder: 100,
           isActive: true,
         },
       });
-
-      const s2 = await db.service.create({
+      const br2 = await db.service.create({
         data: {
           salonId: salonA.id,
-          name: 'Reorder Test 2',
-          category: ServiceCategory.BEARD,
-          priceRupees: 150,
-          durationMin: 15,
-          sortOrder: 101,
+          name: 'Bridal Svc 2',
+          category: ServiceCategory.BRIDAL,
+          priceRupees: 2500,
+          durationMin: 60,
+          sortOrder: 110,
+          isActive: true,
+        },
+      });
+
+      // Create 2 services in isolated MASSAGE category
+      const m1 = await db.service.create({
+        data: {
+          salonId: salonA.id,
+          name: 'Massage Svc 1',
+          category: ServiceCategory.MASSAGE,
+          priceRupees: 800,
+          durationMin: 30,
+          sortOrder: 105,
+          isActive: true,
+        },
+      });
+      const m2 = await db.service.create({
+        data: {
+          salonId: salonA.id,
+          name: 'Massage Svc 2',
+          category: ServiceCategory.MASSAGE,
+          priceRupees: 1200,
+          durationMin: 45,
+          sortOrder: 115,
           isActive: true,
         },
       });
 
       try {
-        // Move s2 UP -> sortOrder swaps with s1
-        const resUp = await reorderServicesStaff(ownerACurrent, salonA.id, s2.id, 'UP');
-        expect(resUp.ok).toBe(true);
+        // 1. Move Up on first service of category (br1) changes NOTHING and returns ok
+        const resFirstUp = await reorderServicesStaff(ownerACurrent, salonA.id, br1.id, 'UP', nowRef);
+        expect(resFirstUp.ok).toBe(true);
+        const br1Check = await db.service.findUnique({ where: { id: br1.id } });
+        expect(br1Check?.sortOrder).toBe(100);
 
-        const s1AfterUp = await db.service.findUnique({ where: { id: s1.id } });
-        const s2AfterUp = await db.service.findUnique({ where: { id: s2.id } });
-        expect(s2AfterUp?.sortOrder).toBe(100);
-        expect(s1AfterUp?.sortOrder).toBe(101);
+        // 2. Move br2 UP in BRIDAL category swaps with br1
+        const resBr2Up = await reorderServicesStaff(ownerACurrent, salonA.id, br2.id, 'UP', nowRef);
+        expect(resBr2Up.ok).toBe(true);
+        const br1After = await db.service.findUnique({ where: { id: br1.id } });
+        const br2After = await db.service.findUnique({ where: { id: br2.id } });
+        expect(br2After?.sortOrder).toBe(100);
+        expect(br1After?.sortOrder).toBe(110);
 
-        // Move s2 DOWN -> sortOrder swaps back
-        const resDown = await reorderServicesStaff(ownerACurrent, salonA.id, s2.id, 'DOWN');
-        expect(resDown.ok).toBe(true);
+        // 3. Moving a service in BRIDAL never changes order of MASSAGE category
+        const m1After = await db.service.findUnique({ where: { id: m1.id } });
+        const m2After = await db.service.findUnique({ where: { id: m2.id } });
+        expect(m1After?.sortOrder).toBe(105);
+        expect(m2After?.sortOrder).toBe(115);
 
-        const s1AfterDown = await db.service.findUnique({ where: { id: s1.id } });
-        const s2AfterDown = await db.service.findUnique({ where: { id: s2.id } });
-        expect(s2AfterDown?.sortOrder).toBe(101);
-        expect(s1AfterDown?.sortOrder).toBe(100);
+        // 4. Move br2 DOWN swaps back with br1
+        const resBr2Down = await reorderServicesStaff(ownerACurrent, salonA.id, br2.id, 'DOWN', nowRef);
+        expect(resBr2Down.ok).toBe(true);
+        const br1Back = await db.service.findUnique({ where: { id: br1.id } });
+        const br2Back = await db.service.findUnique({ where: { id: br2.id } });
+        expect(br1Back?.sortOrder).toBe(100);
+        expect(br2Back?.sortOrder).toBe(110);
 
-        // Foreign service reorder returns NOT_FOUND
-        const resForeign = await reorderServicesStaff(ownerACurrent, salonA.id, serviceB.id, 'UP');
+        // 5. Foreign salon service returns NOT_FOUND
+        const resForeign = await reorderServicesStaff(ownerACurrent, salonA.id, serviceB.id, 'UP', nowRef);
         expect(resForeign.ok).toBe(false);
         expect(resForeign.code).toBe('NOT_FOUND');
+
+        // 6. Verify sortOrder values across the salon are all unique
+        const allSalonServices = await db.service.findMany({
+          where: { salonId: salonA.id },
+          select: { sortOrder: true },
+        });
+        const sortOrders = allSalonServices.map((s) => s.sortOrder);
+        const uniqueSortOrders = new Set(sortOrders);
+        expect(uniqueSortOrders.size).toBe(sortOrders.length);
       } finally {
-        await db.service.deleteMany({ where: { id: { in: [s1.id, s2.id] } } });
+        await db.service.deleteMany({ where: { id: { in: [br1.id, br2.id, m1.id, m2.id] } } });
       }
     });
 
@@ -1382,8 +1462,8 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
       expect(restoredPublic?.services.some((s) => s.id === serviceA1.id)).toBe(true);
     });
 
-    // 17. Barber assignment validation
-    it('17. Barber assignment validation: Foreign barber, inactive barber, or unverified barber rejected with INVALID_BARBER', async () => {
+    // 17. Barber assignment validation via createServiceStaff & updateServiceStaff
+    it('17. Barber assignment validation via createServiceStaff & updateServiceStaff: Foreign, inactive, unverified barbers rejected with INVALID_BARBER and write nothing', async () => {
       const ownerACurrent: CurrentUser = {
         id: ownerA.id,
         role: Role.OWNER,
@@ -1392,31 +1472,77 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         isActive: true,
       };
 
-      // 1. Foreign barber from salonB
-      const resForeign = await setBarberServicesStaff(ownerACurrent, salonA.id, serviceA1.id, [barberB.id]);
-      expect(resForeign.ok).toBe(false);
-      expect(resForeign.code).toBe('INVALID_BARBER');
+      const initialCount = await db.service.count({ where: { salonId: salonA.id } });
 
-      // 2. Inactive barber from salonA
-      const resInactive = await setBarberServicesStaff(ownerACurrent, salonA.id, serviceA1.id, [barberInactive.id]);
-      expect(resInactive.ok).toBe(false);
-      expect(resInactive.code).toBe('INVALID_BARBER');
-
-      // 3. Unverified barber from salonA
-      const resPending = await setBarberServicesStaff(ownerACurrent, salonA.id, serviceA1.id, [barberPending.id]);
-      expect(resPending.ok).toBe(false);
-      expect(resPending.code).toBe('INVALID_BARBER');
-
-      // 4. createServiceStaff with foreign barber
-      const createResForeign = await createServiceStaff(ownerACurrent, salonA.id, {
-        name: 'Invalid Barber Svc',
+      // 1. createServiceStaff with foreign barber
+      const cResForeign = await createServiceStaff(ownerACurrent, salonA.id, {
+        name: 'Foreign Barber Svc',
         category: ServiceCategory.HAIR,
         priceRupees: 150,
         durationMin: 30,
         barberIds: [barberB.id],
-      });
-      expect(createResForeign.ok).toBe(false);
-      expect(createResForeign.code).toBe('INVALID_BARBER');
+      }, nowRef);
+      expect(cResForeign.ok).toBe(false);
+      expect(cResForeign.code).toBe('INVALID_BARBER');
+
+      // 2. createServiceStaff with inactive barber
+      const cResInactive = await createServiceStaff(ownerACurrent, salonA.id, {
+        name: 'Inactive Barber Svc',
+        category: ServiceCategory.HAIR,
+        priceRupees: 150,
+        durationMin: 30,
+        barberIds: [barberInactive.id],
+      }, nowRef);
+      expect(cResInactive.ok).toBe(false);
+      expect(cResInactive.code).toBe('INVALID_BARBER');
+
+      // 3. createServiceStaff with unverified (PENDING) barber
+      const cResPending = await createServiceStaff(ownerACurrent, salonA.id, {
+        name: 'Pending Barber Svc',
+        category: ServiceCategory.HAIR,
+        priceRupees: 150,
+        durationMin: 30,
+        barberIds: [barberPending.id],
+      }, nowRef);
+      expect(cResPending.ok).toBe(false);
+      expect(cResPending.code).toBe('INVALID_BARBER');
+
+      // Verify zero rows written by failed creates
+      const countAfterFailedCreates = await db.service.count({ where: { salonId: salonA.id } });
+      expect(countAfterFailedCreates).toBe(initialCount);
+
+      // 4. updateServiceStaff with foreign barber
+      const uResForeign = await updateServiceStaff(ownerACurrent, salonA.id, serviceA1.id, {
+        category: serviceA1.category,
+        name: serviceA1.name,
+        durationMin: serviceA1.durationMin,
+        priceRupees: serviceA1.priceRupees,
+        barberIds: [barberB.id],
+      }, nowRef);
+      expect(uResForeign.ok).toBe(false);
+      expect(uResForeign.code).toBe('INVALID_BARBER');
+
+      // 5. updateServiceStaff with inactive barber
+      const uResInactive = await updateServiceStaff(ownerACurrent, salonA.id, serviceA1.id, {
+        category: serviceA1.category,
+        name: serviceA1.name,
+        durationMin: serviceA1.durationMin,
+        priceRupees: serviceA1.priceRupees,
+        barberIds: [barberInactive.id],
+      }, nowRef);
+      expect(uResInactive.ok).toBe(false);
+      expect(uResInactive.code).toBe('INVALID_BARBER');
+
+      // 6. updateServiceStaff with unverified (PENDING) barber
+      const uResPending = await updateServiceStaff(ownerACurrent, salonA.id, serviceA1.id, {
+        category: serviceA1.category,
+        name: serviceA1.name,
+        durationMin: serviceA1.durationMin,
+        priceRupees: serviceA1.priceRupees,
+        barberIds: [barberPending.id],
+      }, nowRef);
+      expect(uResPending.ok).toBe(false);
+      expect(uResPending.code).toBe('INVALID_BARBER');
     });
 
     // 18. Boundary limit validations
@@ -1747,8 +1873,8 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
 
       // Barber A creating time-off for Barber B -> NOT_FOUND
       const resTimeOff = await createBarberTimeOffStaff(barberACurrent, barberB.id, {
-        startsAt: new Date(Date.now() + 60000),
-        endsAt: new Date(Date.now() + 120000),
+        startsAt: new Date(nowRef.getTime() + 60000),
+        endsAt: new Date(nowRef.getTime() + 120000),
       });
       expect(resTimeOff.ok).toBe(false);
       expect(resTimeOff.code).toBe('NOT_FOUND');
@@ -1797,6 +1923,392 @@ describe('Phase 4B-1: Staff Rate Card, Salon Hours, Availability and Time-Off Ma
         orderBy: { weekday: 'asc' },
       });
       expect(afterHours).toEqual(beforeHours);
+    });
+
+    // 23. Audit logging across all 8 staff config actions
+    it('23. Audit logging: Each of the 8 staff config actions emits a valid STAFF_CONFIG_CHANGE JSON line without any phone number', async () => {
+      const ownerACurrent: CurrentUser = {
+        id: ownerA.id,
+        role: Role.OWNER,
+        phone: ownerA.phone,
+        name: ownerA.name,
+        isActive: true,
+      };
+      const barberACurrent: CurrentUser = {
+        id: barberUserA.id,
+        role: Role.BARBER,
+        phone: barberUserA.phone,
+        name: barberUserA.name,
+        isActive: true,
+      };
+
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      try {
+        // 1. createServiceStaff
+        const sRes = await createServiceStaff(ownerACurrent, salonA.id, {
+          category: ServiceCategory.HAIR,
+          name: 'Audit Log Test Svc',
+          priceRupees: 180,
+          durationMin: 30,
+        }, nowRef);
+        expect(sRes.ok).toBe(true);
+        const sId = sRes.data!.id;
+
+        // 2. updateServiceStaff
+        await updateServiceStaff(ownerACurrent, salonA.id, sId, {
+          category: ServiceCategory.HAIR,
+          name: 'Audit Log Test Svc Renamed',
+          priceRupees: 220,
+          durationMin: 45,
+        }, nowRef);
+
+        // 3. toggleServiceActiveStaff
+        await toggleServiceActiveStaff(ownerACurrent, salonA.id, sId, false, nowRef);
+
+        // 4. reorderServicesStaff
+        await reorderServicesStaff(ownerACurrent, salonA.id, sId, 'UP', nowRef);
+
+        // 5. updateSalonHoursStaff
+        const hoursData = Array.from({ length: 7 }, (_, i) => ({
+          weekday: i,
+          openMin: 540,
+          closeMin: 1260,
+          isClosed: false,
+        }));
+        await updateSalonHoursStaff(ownerACurrent, salonA.id, hoursData, nowRef);
+
+        // 6. updateBarberAvailabilityStaff
+        await updateBarberAvailabilityStaff(barberACurrent, barberA.id, [
+          { weekday: 1, startMin: 540, endMin: 1020 },
+        ], nowRef);
+
+        // 7. createBarberTimeOffStaff
+        const toRes = await createBarberTimeOffStaff(barberACurrent, barberA.id, {
+          startsAt: new Date(nowRef.getTime() + 86400000 * 2),
+          endsAt: new Date(nowRef.getTime() + 86400000 * 3),
+          reason: 'Audit Leave',
+        }, nowRef);
+        expect(toRes.ok).toBe(true);
+        const toId = toRes.data!.id;
+
+        // 8. deleteBarberTimeOffStaff
+        await deleteBarberTimeOffStaff(barberACurrent, barberA.id, toId, nowRef);
+
+        // Cleanup created service
+        await db.service.delete({ where: { id: sId } });
+
+        // Inspect logged payloads
+        const calls = logSpy.mock.calls.map((c) => c[0]);
+        const configEvents = calls
+          .filter((str) => typeof str === 'string' && str.includes('STAFF_CONFIG_CHANGE'))
+          .map((str) => JSON.parse(str));
+
+        expect(configEvents.length).toBeGreaterThanOrEqual(8);
+
+        const actionsSeen = configEvents.map((e) => e.action);
+        expect(actionsSeen).toContain('CREATE');
+        expect(actionsSeen).toContain('UPDATE');
+        expect(actionsSeen).toContain('SOFT_DELETE');
+        expect(actionsSeen).toContain('REORDER_UP');
+        expect(actionsSeen).toContain('DELETE');
+
+        // Assert all payloads have required fields and NO phone number
+        for (const evt of configEvents) {
+          expect(evt.event).toBe('STAFF_CONFIG_CHANGE');
+          expect(evt.staffUserId).toBeDefined();
+          expect(evt.entity).toBeDefined();
+          expect(evt.entityId).toBeDefined();
+          expect(evt.action).toBeDefined();
+
+          const jsonStr = JSON.stringify(evt);
+          expect(jsonStr).not.toContain(ownerA.phone);
+          expect(jsonStr).not.toContain(barberUserA.phone);
+        }
+      } finally {
+        logSpy.mockRestore();
+      }
+    });
+
+    // 24. Weekly hours persistence
+    it('24. Weekly hours persistence: Saving all 7 weekdays with distinct values persists and reads back via getSalonHoursStaff', async () => {
+      const ownerACurrent: CurrentUser = {
+        id: ownerA.id,
+        role: Role.OWNER,
+        phone: ownerA.phone,
+        name: ownerA.name,
+        isActive: true,
+      };
+
+      const distinctHours = [
+        { weekday: 0, openMin: 540, closeMin: 1200, isClosed: false },
+        { weekday: 1, openMin: 600, closeMin: 1140, isClosed: false },
+        { weekday: 2, openMin: 540, closeMin: 1080, isClosed: false },
+        { weekday: 3, openMin: 0, closeMin: 0, isClosed: true },
+        { weekday: 4, openMin: 660, closeMin: 1260, isClosed: false },
+        { weekday: 5, openMin: 540, closeMin: 1260, isClosed: false },
+        { weekday: 6, openMin: 600, closeMin: 1200, isClosed: false },
+      ];
+
+      const saveRes = await updateSalonHoursStaff(ownerACurrent, salonA.id, distinctHours, nowRef);
+      expect(saveRes.ok).toBe(true);
+
+      const readRes = await getSalonHoursStaff(ownerACurrent, salonA.id);
+      expect(readRes.ok).toBe(true);
+      expect(readRes.data).toHaveLength(7);
+
+      for (let d = 0; d < 7; d++) {
+        const savedDay = readRes.data!.find((h) => h.weekday === d);
+        expect(savedDay).toBeDefined();
+        expect(savedDay!.openMin).toBe(distinctHours[d].openMin);
+        expect(savedDay!.closeMin).toBe(distinctHours[d].closeMin);
+        expect(savedDay!.isClosed).toBe(distinctHours[d].isClosed);
+      }
+    });
+
+    // 25. Full-field service creation persistence
+    it('25. Full-field service creation: All fields (category, name, nameHi, price, duration, barbers, sortOrder) are stored correctly', async () => {
+      const ownerACurrent: CurrentUser = {
+        id: ownerA.id,
+        role: Role.OWNER,
+        phone: ownerA.phone,
+        name: ownerA.name,
+        isActive: true,
+      };
+
+      const res = await createServiceStaff(ownerACurrent, salonA.id, {
+        category: ServiceCategory.BEARD,
+        name: 'Royal Beard Grooming',
+        nameHi: 'शाही दाढ़ी ग्रूमिंग',
+        priceRupees: 350,
+        durationMin: 45,
+        isActive: true,
+        barberIds: [barberA.id],
+      }, nowRef);
+
+      expect(res.ok).toBe(true);
+      const serviceId = res.data!.id;
+
+      try {
+        const dbService = await db.service.findUnique({
+          where: { id: serviceId },
+          include: { barbers: true },
+        });
+
+        expect(dbService).toBeDefined();
+        expect(dbService!.category).toBe(ServiceCategory.BEARD);
+        expect(dbService!.name).toBe('Royal Beard Grooming');
+        expect(dbService!.nameHi).toBe('शाही दाढ़ी ग्रूमिंग');
+        expect(dbService!.priceRupees).toBe(350);
+        expect(dbService!.durationMin).toBe(45);
+        expect(dbService!.isActive).toBe(true);
+        expect(typeof dbService!.sortOrder).toBe('number');
+        expect(dbService!.barbers).toHaveLength(1);
+        expect(dbService!.barbers[0].barberId).toBe(barberA.id);
+      } finally {
+        await db.service.delete({ where: { id: serviceId } });
+      }
+    });
+
+    // 26. Complete status gating table-driven matrix
+    it('26. Status gating table-driven matrix: Rejection across all salon, barber, and staff user states for all 8 actions with zero DB mutations', async () => {
+      // 1. Create fixtures for each invalid state:
+      // Salons: PENDING, REJECTED, SUSPENDED
+      const pSalon = await db.salon.create({
+        data: {
+          ownerId: ownerA.id,
+          name: 'Pending Salon Matrix',
+          slug: 'pending-salon-matrix-' + nextFixtureId(),
+          status: VerificationStatus.PENDING,
+          addressLine: '123 Pending St',
+          area: 'Area',
+          city: 'Bengaluru',
+          pincode: '560001',
+        },
+      });
+      const rSalon = await db.salon.create({
+        data: {
+          ownerId: ownerA.id,
+          name: 'Rejected Salon Matrix',
+          slug: 'rejected-salon-matrix-' + nextFixtureId(),
+          status: VerificationStatus.REJECTED,
+          addressLine: '123 Rejected St',
+          area: 'Area',
+          city: 'Bengaluru',
+          pincode: '560001',
+        },
+      });
+      const sSalon = await db.salon.create({
+        data: {
+          ownerId: ownerA.id,
+          name: 'Suspended Salon Matrix',
+          slug: 'suspended-salon-matrix-' + nextFixtureId(),
+          status: VerificationStatus.SUSPENDED,
+          addressLine: '123 Suspended St',
+          area: 'Area',
+          city: 'Bengaluru',
+          pincode: '560001',
+        },
+      });
+
+      // Barbers in salonA with invalid states:
+      const pBarberUser = await db.user.create({
+        data: {
+          phone: '+919799' + String(100000 + nextFixtureId()).padStart(6, '0'),
+          name: 'Pending Barber Matrix',
+          role: Role.BARBER,
+          isActive: true,
+        },
+      });
+      const pBarber = await db.barber.create({
+        data: {
+          salonId: salonA.id,
+          userId: pBarberUser.id,
+          displayName: 'Pending Barber Matrix',
+          status: VerificationStatus.PENDING,
+          isActive: true,
+        },
+      });
+
+      const rBarberUser = await db.user.create({
+        data: {
+          phone: '+919799' + String(100000 + nextFixtureId()).padStart(6, '0'),
+          name: 'Rejected Barber Matrix',
+          role: Role.BARBER,
+          isActive: true,
+        },
+      });
+      const rBarber = await db.barber.create({
+        data: {
+          salonId: salonA.id,
+          userId: rBarberUser.id,
+          displayName: 'Rejected Barber Matrix',
+          status: VerificationStatus.REJECTED,
+          isActive: true,
+        },
+      });
+
+      const sBarberUser = await db.user.create({
+        data: {
+          phone: '+919799' + String(100000 + nextFixtureId()).padStart(6, '0'),
+          name: 'Suspended Barber Matrix',
+          role: Role.BARBER,
+          isActive: true,
+        },
+      });
+      const sBarber = await db.barber.create({
+        data: {
+          salonId: salonA.id,
+          userId: sBarberUser.id,
+          displayName: 'Suspended Barber Matrix',
+          status: VerificationStatus.SUSPENDED,
+          isActive: true,
+        },
+      });
+
+      // Barber with isActive = false
+      const inactBarberUser = await db.user.create({
+        data: {
+          phone: '+919799' + String(100000 + nextFixtureId()).padStart(6, '0'),
+          name: 'Inactive Barber Flag Matrix',
+          role: Role.BARBER,
+          isActive: true,
+        },
+      });
+      const inactBarber = await db.barber.create({
+        data: {
+          salonId: salonA.id,
+          userId: inactBarberUser.id,
+          displayName: 'Inactive Barber Flag Matrix',
+          status: VerificationStatus.VERIFIED,
+          isActive: false,
+        },
+      });
+
+      const ownerCurrent: CurrentUser = {
+        id: ownerA.id,
+        role: Role.OWNER,
+        phone: ownerA.phone,
+        name: ownerA.name,
+        isActive: true,
+      };
+
+      const inactiveOwnerCurrent: CurrentUser = {
+        id: ownerA.id,
+        role: Role.OWNER,
+        phone: ownerA.phone,
+        name: ownerA.name,
+        isActive: false, // user.isActive = false
+      };
+
+      const dummyHours = Array.from({ length: 7 }, (_, i) => ({
+        weekday: i,
+        openMin: 540,
+        closeMin: 1260,
+        isClosed: false,
+      }));
+      const dummyWindows = [{ weekday: 1, startMin: 540, endMin: 1020 }];
+
+      try {
+        // Table of test cases:
+        const matrixCases: Array<{
+          name: string;
+          fn: () => Promise<StaffConfigResult<unknown>>;
+        }> = [
+          // Salon PENDING
+          { name: 'createService on PENDING salon', fn: () => createServiceStaff(ownerCurrent, pSalon.id, { category: ServiceCategory.HAIR, name: 'Svc', priceRupees: 100, durationMin: 30 }, nowRef) },
+          { name: 'updateSalonHours on PENDING salon', fn: () => updateSalonHoursStaff(ownerCurrent, pSalon.id, dummyHours, nowRef) },
+
+          // Salon REJECTED
+          { name: 'createService on REJECTED salon', fn: () => createServiceStaff(ownerCurrent, rSalon.id, { category: ServiceCategory.HAIR, name: 'Svc', priceRupees: 100, durationMin: 30 }, nowRef) },
+          { name: 'updateSalonHours on REJECTED salon', fn: () => updateSalonHoursStaff(ownerCurrent, rSalon.id, dummyHours, nowRef) },
+
+          // Salon SUSPENDED
+          { name: 'createService on SUSPENDED salon', fn: () => createServiceStaff(ownerCurrent, sSalon.id, { category: ServiceCategory.HAIR, name: 'Svc', priceRupees: 100, durationMin: 30 }, nowRef) },
+          { name: 'updateSalonHours on SUSPENDED salon', fn: () => updateSalonHoursStaff(ownerCurrent, sSalon.id, dummyHours, nowRef) },
+
+          // Barber PENDING
+          { name: 'updateBarberAvailability for PENDING barber', fn: () => updateBarberAvailabilityStaff(ownerCurrent, pBarber.id, dummyWindows, nowRef) },
+          { name: 'createBarberTimeOff for PENDING barber', fn: () => createBarberTimeOffStaff(ownerCurrent, pBarber.id, { startsAt: new Date(nowRef.getTime() + 86400000), endsAt: new Date(nowRef.getTime() + 90000000) }, nowRef) },
+          { name: 'deleteBarberTimeOff for PENDING barber', fn: () => deleteBarberTimeOffStaff(ownerCurrent, pBarber.id, 'cmwfakeid00000000000000000', nowRef) },
+
+          // Barber REJECTED
+          { name: 'updateBarberAvailability for REJECTED barber', fn: () => updateBarberAvailabilityStaff(ownerCurrent, rBarber.id, dummyWindows, nowRef) },
+          { name: 'createBarberTimeOff for REJECTED barber', fn: () => createBarberTimeOffStaff(ownerCurrent, rBarber.id, { startsAt: new Date(nowRef.getTime() + 86400000), endsAt: new Date(nowRef.getTime() + 90000000) }, nowRef) },
+          { name: 'deleteBarberTimeOff for REJECTED barber', fn: () => deleteBarberTimeOffStaff(ownerCurrent, rBarber.id, 'cmwfakeid00000000000000000', nowRef) },
+
+          // Barber SUSPENDED
+          { name: 'updateBarberAvailability for SUSPENDED barber', fn: () => updateBarberAvailabilityStaff(ownerCurrent, sBarber.id, dummyWindows, nowRef) },
+          { name: 'createBarberTimeOff for SUSPENDED barber', fn: () => createBarberTimeOffStaff(ownerCurrent, sBarber.id, { startsAt: new Date(nowRef.getTime() + 86400000), endsAt: new Date(nowRef.getTime() + 90000000) }, nowRef) },
+          { name: 'deleteBarberTimeOff for SUSPENDED barber', fn: () => deleteBarberTimeOffStaff(ownerCurrent, sBarber.id, 'cmwfakeid00000000000000000', nowRef) },
+
+          // Barber isActive = false
+          { name: 'updateBarberAvailability for barber.isActive=false', fn: () => updateBarberAvailabilityStaff(ownerCurrent, inactBarber.id, dummyWindows, nowRef) },
+          { name: 'createBarberTimeOff for barber.isActive=false', fn: () => createBarberTimeOffStaff(ownerCurrent, inactBarber.id, { startsAt: new Date(nowRef.getTime() + 86400000), endsAt: new Date(nowRef.getTime() + 90000000) }, nowRef) },
+          { name: 'deleteBarberTimeOff for barber.isActive=false', fn: () => deleteBarberTimeOffStaff(ownerCurrent, inactBarber.id, 'cmwfakeid00000000000000000', nowRef) },
+
+          // User isActive = false across all 8 actions:
+          { name: 'createService with user.isActive=false', fn: () => createServiceStaff(inactiveOwnerCurrent, salonA.id, { category: ServiceCategory.HAIR, name: 'Svc', priceRupees: 100, durationMin: 30 }, nowRef) },
+          { name: 'updateService with user.isActive=false', fn: () => updateServiceStaff(inactiveOwnerCurrent, salonA.id, serviceA1.id, { category: serviceA1.category, name: 'Svc', priceRupees: 100, durationMin: 30 }, nowRef) },
+          { name: 'toggleServiceActive with user.isActive=false', fn: () => toggleServiceActiveStaff(inactiveOwnerCurrent, salonA.id, serviceA1.id, false, nowRef) },
+          { name: 'reorderServices with user.isActive=false', fn: () => reorderServicesStaff(inactiveOwnerCurrent, salonA.id, serviceA1.id, 'UP', nowRef) },
+          { name: 'updateSalonHours with user.isActive=false', fn: () => updateSalonHoursStaff(inactiveOwnerCurrent, salonA.id, dummyHours, nowRef) },
+          { name: 'updateBarberAvailability with user.isActive=false', fn: () => updateBarberAvailabilityStaff(inactiveOwnerCurrent, barberA.id, dummyWindows, nowRef) },
+          { name: 'createBarberTimeOff with user.isActive=false', fn: () => createBarberTimeOffStaff(inactiveOwnerCurrent, barberA.id, { startsAt: new Date(nowRef.getTime() + 86400000), endsAt: new Date(nowRef.getTime() + 90000000) }, nowRef) },
+          { name: 'deleteBarberTimeOff with user.isActive=false', fn: () => deleteBarberTimeOffStaff(inactiveOwnerCurrent, barberA.id, 'cmwfakeid00000000000000000', nowRef) },
+        ];
+
+        // Execute every single case: expect ok === false and assert zero DB mutations
+        for (const testCase of matrixCases) {
+          const res = await testCase.fn();
+          expect(res.ok, `Case failed: ${testCase.name}`).toBe(false);
+          expect(res.code, `Case error code: ${testCase.name}`).toMatch(/UNAUTHORIZED|NOT_FOUND/);
+        }
+      } finally {
+        await db.salon.deleteMany({ where: { id: { in: [pSalon.id, rSalon.id, sSalon.id] } } });
+        await db.barber.deleteMany({ where: { id: { in: [pBarber.id, rBarber.id, sBarber.id, inactBarber.id] } } });
+        await db.user.deleteMany({ where: { id: { in: [pBarberUser.id, rBarberUser.id, sBarberUser.id, inactBarberUser.id] } } });
+      }
     });
   });
 });

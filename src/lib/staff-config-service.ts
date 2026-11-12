@@ -561,80 +561,6 @@ export async function updateServiceStaff(
   return { ok: true, data: { id: serviceId } };
 }
 
-export async function setBarberServicesStaff(
-  staffUser: CurrentUser,
-  salonId: string,
-  serviceId: string,
-  barberIds: string[],
-  now: Date = new Date()
-): Promise<StaffConfigResult<{ count: number }>> {
-  if (staffUser.role !== Role.OWNER) {
-    return { ok: false, code: 'UNAUTHORIZED', message: 'Only salon owners can assign barbers to services.' };
-  }
-
-  const service = await prisma.service.findUnique({
-    where: { id: serviceId },
-    include: { salon: { select: { id: true, ownerId: true, status: true } } },
-  });
-
-  if (!service || service.salonId !== salonId || service.salon.ownerId !== staffUser.id) {
-    return { ok: false, code: 'NOT_FOUND', message: 'Service not found.' };
-  }
-
-  if (service.salon.status !== VerificationStatus.VERIFIED) {
-    return { ok: false, code: 'UNAUTHORIZED', message: 'Salon is not verified.' };
-  }
-
-  const policyUser: PolicyUser = { id: staffUser.id, role: staffUser.role, isActive: staffUser.isActive };
-  const policySalon: PolicySalon = { id: service.salon.id, ownerId: service.salon.ownerId };
-  if (!canManageSalonServices(policyUser, policySalon)) {
-    return { ok: false, code: 'UNAUTHORIZED', message: 'Unauthorized.' };
-  }
-
-  if (!checkStaffEditRateLimit(staffUser.id, now.getTime())) {
-    return { ok: false, code: 'EDIT_LIMIT', message: 'Staff edit rate limit exceeded.' };
-  }
-
-  if (barberIds.length > 0) {
-    const activeBarbers = await prisma.barber.findMany({
-      where: {
-        id: { in: barberIds },
-        salonId,
-        status: VerificationStatus.VERIFIED,
-        isActive: true,
-      },
-      select: { id: true },
-    });
-
-    if (activeBarbers.length !== barberIds.length) {
-      return {
-        ok: false,
-        code: 'INVALID_BARBER',
-        message: 'Passing a barber from another salon, or an unverified/inactive barber, is rejected.',
-      };
-    }
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.barberService.deleteMany({ where: { serviceId } });
-    if (barberIds.length > 0) {
-      await tx.barberService.createMany({
-        data: barberIds.map((bId) => ({ barberId: bId, serviceId })),
-      });
-    }
-  });
-
-  logStaffConfigEvent({
-    staffUserId: staffUser.id,
-    entity: 'BarberService',
-    entityId: serviceId,
-    action: 'SET_BARBERS',
-    timestamp: now.toISOString(),
-  });
-
-  return { ok: true, data: { count: barberIds.length } };
-}
-
 export async function toggleServiceActiveStaff(
   staffUser: CurrentUser,
   salonId: string,
@@ -720,25 +646,25 @@ export async function reorderServicesStaff(
   }
 
   // Get all services of this salon sorted by sortOrder asc
-  const allServices = await prisma.service.findMany({
-    where: { salonId },
+  const categoryServices = await prisma.service.findMany({
+    where: { salonId, category: service.category },
     orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
     select: { id: true, sortOrder: true },
   });
 
-  const currentIndex = allServices.findIndex((s) => s.id === serviceId);
+  const currentIndex = categoryServices.findIndex((s) => s.id === serviceId);
   if (currentIndex === -1) {
     return { ok: false, code: 'NOT_FOUND', message: 'Service not found.' };
   }
 
   const targetIndex = direction === 'UP' ? currentIndex - 1 : currentIndex + 1;
-  if (targetIndex < 0 || targetIndex >= allServices.length) {
+  if (targetIndex < 0 || targetIndex >= categoryServices.length) {
     // Already at the boundary, nothing to move
     return { ok: true, data: { ok: true } };
   }
 
-  const currentItem = allServices[currentIndex];
-  const targetItem = allServices[targetIndex];
+  const currentItem = categoryServices[currentIndex];
+  const targetItem = categoryServices[targetIndex];
 
   // Swap their sortOrder atomically
   await prisma.$transaction([
@@ -998,7 +924,7 @@ export async function getBarberAvailabilityStaff(
     return { ok: false, code: 'NOT_FOUND', message: 'Barber not found.' };
   }
 
-  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED) {
+  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED || !barber.isActive) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Barber or salon is not verified.' };
   }
 
@@ -1026,6 +952,9 @@ export async function updateBarberAvailabilityStaff(
 ): Promise<StaffConfigResult<{ conflicts: ScheduleConflictItem[] }>> {
   if (staffUser.role !== Role.BARBER && staffUser.role !== Role.OWNER) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Only barbers and salon owners can manage barber schedules.' };
+  }
+  if (!staffUser.isActive) {
+    return { ok: false, code: 'UNAUTHORIZED', message: 'Staff user is inactive.' };
   }
 
   const barber = await prisma.barber.findUnique({
@@ -1057,7 +986,7 @@ export async function updateBarberAvailabilityStaff(
     return { ok: false, code: 'NOT_FOUND', message: 'Barber not found.' };
   }
 
-  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED) {
+  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED || !barber.isActive) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Barber or salon is not verified.' };
   }
 
@@ -1211,7 +1140,7 @@ export async function getBarberTimeOffStaff(
     return { ok: false, code: 'NOT_FOUND', message: 'Barber not found.' };
   }
 
-  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED) {
+  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED || !barber.isActive) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Barber or salon is not verified.' };
   }
 
@@ -1281,7 +1210,7 @@ export async function createBarberTimeOffStaff(
     return { ok: false, code: 'NOT_FOUND', message: 'Barber not found.' };
   }
 
-  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED) {
+  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED || !barber.isActive) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Barber or salon is not verified.' };
   }
 
@@ -1398,7 +1327,7 @@ export async function deleteBarberTimeOffStaff(
     return { ok: false, code: 'NOT_FOUND', message: 'Barber not found.' };
   }
 
-  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED) {
+  if (barber.salon.status !== VerificationStatus.VERIFIED || barber.status !== VerificationStatus.VERIFIED || !barber.isActive) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Barber or salon is not verified.' };
   }
 
@@ -1436,7 +1365,6 @@ export const createService = createServiceStaff;
 export const updateService = updateServiceStaff;
 export const toggleServiceActive = toggleServiceActiveStaff;
 export const reorderServices = reorderServicesStaff;
-export const setBarberServices = setBarberServicesStaff;
 export const saveSalonHours = updateSalonHoursStaff;
 export const saveBarberAvailability = updateBarberAvailabilityStaff;
 export const createTimeOff = createBarberTimeOffStaff;
