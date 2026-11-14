@@ -265,14 +265,17 @@ export async function addBarberStaff(
     return { ok: false, code: 'PHONE_IN_USE', message: 'Phone number is already registered to an existing account.' };
   }
 
-  // Check salon barber cap (max 20 barbers)
-  const currentCount = await prisma.barber.count({ where: { salonId } });
-  if (currentCount >= 20) {
-    return { ok: false, code: 'LIMIT_EXCEEDED', message: 'Salon has reached the maximum cap of 20 barbers.' };
-  }
-
   try {
     const newBarber = await prisma.$transaction(async (tx) => {
+      // Lock salon row to serialize concurrent barber additions and prevent 20-barber cap race
+      await tx.$queryRaw`SELECT id FROM "Salon" WHERE id = ${salonId} FOR UPDATE;`;
+
+      // Check salon barber cap (max 20 barbers) inside transaction under lock
+      const currentCount = await tx.barber.count({ where: { salonId } });
+      if (currentCount >= 20) {
+        throw new Error('LIMIT_EXCEEDED');
+      }
+
       const user = await tx.user.create({
         data: {
           role: Role.BARBER,
@@ -315,6 +318,14 @@ export async function addBarberStaff(
       },
     };
   } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'message' in err &&
+      (err as { message: string }).message === 'LIMIT_EXCEEDED'
+    ) {
+      return { ok: false, code: 'LIMIT_EXCEEDED', message: 'Salon has reached the maximum cap of 20 barbers.' };
+    }
     if (
       err &&
       typeof err === 'object' &&
@@ -576,7 +587,7 @@ export async function updateBarberProfileStaff(
     return { ok: false, code: 'NOT_FOUND', message: 'Barber not found.' };
   }
 
-  if (barber.salon.status !== VerificationStatus.VERIFIED || !barber.isActive) {
+  if (barber.salon.status !== VerificationStatus.VERIFIED || !barber.isActive || barber.status !== VerificationStatus.VERIFIED) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Salon or barber is not active/verified.' };
   }
 

@@ -367,3 +367,25 @@ Where earlier documents or specifications differed, Phase 4A prompt directives t
    - Barber availability updates lock the target `Barber` row using parameterized tagged-template `SELECT id FROM "Barber" WHERE id = ${barberId} FOR UPDATE;` inside an interactive database transaction before clearing and recreating shifts. This completely eliminates race conditions and overlapping availability windows under concurrent requests.
 4. **Rate Card Physical Aesthetic:**
    - The service editor models the physical painted rate card board (`RateCardBoard` visual metaphor) grouped by `ServiceCategory`, with soft-delete toggle (`isActive = false`) and manual reordering controls (`sortOrder`) in lieu of generic SaaS data tables.
+
+---
+
+## 11. Phase 4B-2: Staff Barber Roster, Concurrency Invariants, and Cap Decisions
+
+### 11.1 Counting Inactive Barbers Toward the 20-Barber Salon Cap
+In `addBarberStaff`, the salon capacity check counts all barber records associated with the salon (`where: { salonId }`), encompassing both active (`isActive: true`) and deactivated (`isActive: false`) barbers:
+- **Rationale:** Deactivated barbers retain their historical join relationships (service mappings, historical booking attribution) and can be reactivated with a single click by the salon owner. Allowing deactivated barbers to be excluded from the 20-barber ceiling would allow unbounded accumulation of inactive accounts and create a vulnerability where a salon could churn inactive accounts to bypass the roster cap, or exceed the 20-barber operational limit upon batch reactivation.
+- **Atomic Enforcement:** To prevent race conditions where concurrent `addBarberStaff` calls breach the cap (e.g., two requests when the salon has 19 barbers), `addBarberStaff` acquires a row-level `FOR UPDATE` lock on the `Salon` record (`SELECT id FROM "Salon" WHERE id = ${salonId} FOR UPDATE;`) inside the Prisma transaction before evaluating `tx.barber.count({ where: { salonId } })`.
+
+### 11.2 Serialization of Barber Removal and Booking Creation
+To close the race condition where a customer could book an appointment with a barber during the exact instant the salon owner deactivates that barber:
+- `createBooking`, `rescheduleBooking`, and `createWalkInBookingStaff` acquire a parameterized `FOR SHARE` row-level lock on the `Barber` record inside their transaction:
+  ```sql
+  SELECT id, "isActive", status, "salonId" FROM "Barber" WHERE id = ${barberId} FOR SHARE;
+  ```
+- The locked row is re-verified (`isActive === true`, `status === 'VERIFIED'`, and matching `salonId`).
+- Because `removeBarberStaff` acquires a `FOR UPDATE` lock on the same `Barber` row:
+  - If `createBooking` runs first: `removeBarberStaff` waits for the booking to commit, then acquires `FOR UPDATE`, discovers the newly committed active booking, and cleanly aborts with `BARBER_HAS_BOOKINGS`.
+  - If `removeBarberStaff` runs first: `createBooking` waits for deactivation to commit, then acquires `FOR SHARE`, discovers `isActive === false`, and cleanly aborts with `NOT_FOUND`.
+  - The invalid state where an inactive barber holds an active future booking is mathematically impossible.
+

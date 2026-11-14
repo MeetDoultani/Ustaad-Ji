@@ -969,6 +969,16 @@ export async function createWalkInBooking(params: {
     const candidateSlot = availableSlots[attempt];
     try {
       const result = await prisma.$transaction(async (tx) => {
+        // Lock barber row FOR SHARE to serialize against concurrent removeBarberStaff
+        const lockedBarbers = await tx.$queryRaw<
+          Array<{ id: string; isActive: boolean; status: VerificationStatus; salonId: string }>
+        >`SELECT id, "isActive", status, "salonId" FROM "Barber" WHERE id = ${barber.id} FOR SHARE;`;
+
+        const lockedBarber = lockedBarbers[0];
+        if (!lockedBarber || !lockedBarber.isActive || lockedBarber.status !== 'VERIFIED' || lockedBarber.salonId !== barber.salonId) {
+          throw new Error('BARBER_UNAVAILABLE');
+        }
+
         // Allocate next daily token atomically
         const counter = await tx.dailyTokenCounter.upsert({
           where: {
@@ -1040,6 +1050,13 @@ export async function createWalkInBooking(params: {
       return { ok: true, data: result };
     } catch (err: unknown) {
       const errStr = String(err);
+      if (errStr.includes('BARBER_UNAVAILABLE')) {
+        return {
+          ok: false,
+          code: 'NOT_FOUND',
+          message: 'Barber is not available or inactive.',
+        };
+      }
       if (errStr.includes('23P01') || errStr.includes('booking_no_overlap')) {
         // Slot collision in concurrent race - retry next available slot
         continue;

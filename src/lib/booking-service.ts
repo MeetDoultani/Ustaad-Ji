@@ -1,4 +1,4 @@
-import { BookingStatus, BookingType, BookingSource, Role, Prisma } from '@prisma/client';
+import { BookingStatus, BookingType, BookingSource, Role, Prisma, VerificationStatus } from '@prisma/client';
 import { prisma } from './db';
 import {
   MAX_ACTIVE_BOOKINGS_PER_CUSTOMER,
@@ -166,6 +166,11 @@ export async function getAvailableSlots({
 /**
  * Create a new booking inside a single interactive transaction.
  */
+// Optional test hook for deterministic race verification (active only in test environments)
+export const __testHooks = {
+  beforeBookingTx: null as (() => Promise<void>) | null,
+};
+
 export async function createBooking({
   customerId,
   salonId,
@@ -390,9 +395,23 @@ export async function createBooking({
   const tokenDate = toTokenDateUtc(startsAt);
   const initialStatus = salon.requiresApproval ? BookingStatus.PENDING : BookingStatus.CONFIRMED;
 
+  if (process.env.NODE_ENV === 'test' && __testHooks.beforeBookingTx) {
+    await __testHooks.beforeBookingTx();
+  }
+
   try {
     const result = await prisma.$transaction(
       async (tx) => {
+        // Lock barber row FOR SHARE to serialize against concurrent removeBarberStaff (which locks FOR UPDATE)
+        const lockedBarbers = await tx.$queryRaw<
+          Array<{ id: string; isActive: boolean; status: VerificationStatus; salonId: string }>
+        >`SELECT id, "isActive", status, "salonId" FROM "Barber" WHERE id = ${barberId} FOR SHARE;`;
+
+        const lockedBarber = lockedBarbers[0];
+        if (!lockedBarber || !lockedBarber.isActive || lockedBarber.status !== 'VERIFIED' || lockedBarber.salonId !== salonId) {
+          throw new Error('BARBER_UNAVAILABLE');
+        }
+
         // Double check customer overlap inside tx to guard concurrent submissions from same customer
         const customerOverlapInsideTx = await tx.booking.findFirst({
           where: {
@@ -507,6 +526,14 @@ export async function createBooking({
     return { ok: true, data: result };
   } catch (error: unknown) {
     const err = error as { code?: string; message?: string };
+    if (err.message === 'BARBER_UNAVAILABLE') {
+      return {
+        ok: false,
+        code: 'NOT_FOUND',
+        message: 'Barber is not available or not associated with this salon.',
+      };
+    }
+
     if (err.message === 'CUSTOMER_OVERLAP_ERROR') {
       return {
         ok: false,
@@ -768,7 +795,17 @@ export async function rescheduleBooking({
   try {
     const result = await prisma.$transaction(
       async (tx) => {
-        // Step 1: Mark old booking as CANCELLED (RESCHEDULED) before creating the new booking
+        // Step 1: Lock barber row FOR SHARE to serialize against concurrent removeBarberStaff
+        const lockedBarbers = await tx.$queryRaw<
+          Array<{ id: string; isActive: boolean; status: VerificationStatus; salonId: string }>
+        >`SELECT id, "isActive", status, "salonId" FROM "Barber" WHERE id = ${oldBooking.barberId} FOR SHARE;`;
+
+        const lockedBarber = lockedBarbers[0];
+        if (!lockedBarber || !lockedBarber.isActive || lockedBarber.status !== 'VERIFIED' || lockedBarber.salonId !== oldBooking.salonId) {
+          throw new Error('BARBER_UNAVAILABLE');
+        }
+
+        // Step 2: Mark old booking as CANCELLED (RESCHEDULED) before creating the new booking
         // to prevent PostgreSQL booking_no_overlap exclusion conflict if shifting windows overlap
         await tx.booking.update({
           where: { id: bookingId },
@@ -890,6 +927,14 @@ export async function rescheduleBooking({
     return { ok: true, data: result };
   } catch (error: unknown) {
     const err = error as { code?: string; message?: string };
+    if (err.message === 'BARBER_UNAVAILABLE') {
+      return {
+        ok: false,
+        code: 'NOT_FOUND',
+        message: 'Barber is not available or not associated with this salon.',
+      };
+    }
+
     if (err.message === 'CUSTOMER_OVERLAP_ERROR') {
       return {
         ok: false,
