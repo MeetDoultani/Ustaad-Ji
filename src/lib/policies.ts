@@ -327,3 +327,64 @@ export function canManageStaffBarberSchedule(
 
   return false;
 }
+
+/**
+ * Authorization: Manage salon barber roster (add, remove, reactivate barbers).
+ * Allowed: Active OWNER of that specific salon only.
+ * Denied: Barbers, other salon owners, customers, admins.
+ */
+export function canManageBarberRoster(
+  user: PolicyUser | null | undefined,
+  salon: PolicySalon | null | undefined
+): boolean {
+  if (!isValidUser(user) || !salon) return false;
+  return user.role === Role.OWNER && user.id === salon.ownerId;
+}
+
+/**
+ * Authorization: Edit a barber's profile (displayName, bio, experienceYears, photoUrl).
+ * Allowed: The active barber themselves (user.id === barber.userId only, NEVER barber.id)
+ *          OR the active owner of that barber's salon.
+ * Denied: Other barbers, other salon owners, customers, admins.
+ */
+export function canEditBarberProfile(
+  user: PolicyUser | null | undefined,
+  barber: PolicyBarber | null | undefined
+): boolean {
+  if (!isValidUser(user) || !barber) return false;
+
+  if (user.role === Role.BARBER && user.id === barber.userId) {
+    return true;
+  }
+
+  if (user.role === Role.OWNER && user.id === barber.salonOwnerId) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Authorization: Edit salon public profile details.
+ * Allowed: Active OWNER of that specific salon only.
+ * Denied: Barbers, other salon owners, customers, admins.
+ */
+export function canEditSalonProfile(
+  user: PolicyUser | null | undefined,
+  salon: PolicySalon | null | undefined
+): boolean {
+  if (!isValidUser(user) || !salon) return false;
+  return user.role === Role.OWNER && user.id === salon.ownerId;
+}
+
+/**
+ * Authorization: View historical bookings.
+ * Allowed: Active BARBER or active OWNER.
+ * Denied: Customers, admins, inactive users.
+ */
+export function canViewBookingHistory(
+  user: PolicyUser | null | undefined
+): boolean {
+  if (!isValidUser(user)) return false;
+  return user.role === Role.BARBER || user.role === Role.OWNER;
+}

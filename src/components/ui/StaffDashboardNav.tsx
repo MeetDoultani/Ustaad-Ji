@@ -8,8 +8,11 @@ import { useTranslations } from 'next-intl';
 export type StaffDashboardTab =
   | 'register'
   | 'walk-in'
+  | 'history'
   | 'services'
   | 'hours'
+  | 'barbers'
+  | 'profile'
   | 'availability'
   | 'time-off';
 
@@ -24,42 +27,27 @@ interface NavItemConfig {
   key: StaffDashboardTab;
   href: string;
   labelKey: string;
-  ownerOnly?: boolean;
 }
 
-const NAV_ITEMS: NavItemConfig[] = [
-  {
-    key: 'register',
-    href: '/dashboard',
-    labelKey: 'navRegister',
-  },
-  {
-    key: 'walk-in',
-    href: '/dashboard/walk-in',
-    labelKey: 'navWalkIn',
-  },
-  {
-    key: 'services',
-    href: '/dashboard/services',
-    labelKey: 'navServices',
-    ownerOnly: true,
-  },
-  {
-    key: 'hours',
-    href: '/dashboard/hours',
-    labelKey: 'navHours',
-    ownerOnly: true,
-  },
-  {
-    key: 'availability',
-    href: '/dashboard/availability',
-    labelKey: 'navAvailability',
-  },
-  {
-    key: 'time-off',
-    href: '/dashboard/time-off',
-    labelKey: 'navTimeOff',
-  },
+const OWNER_NAV_ITEMS: NavItemConfig[] = [
+  { key: 'register', href: '/dashboard', labelKey: 'navRegister' },
+  { key: 'walk-in', href: '/dashboard/walk-in', labelKey: 'navWalkIn' },
+  { key: 'history', href: '/dashboard/history', labelKey: 'navHistory' },
+  { key: 'services', href: '/dashboard/services', labelKey: 'navServices' },
+  { key: 'hours', href: '/dashboard/hours', labelKey: 'navHours' },
+  { key: 'barbers', href: '/dashboard/barbers', labelKey: 'navBarbers' },
+  { key: 'profile', href: '/dashboard/profile', labelKey: 'navSalonProfile' },
+  { key: 'availability', href: '/dashboard/availability', labelKey: 'navAvailability' },
+  { key: 'time-off', href: '/dashboard/time-off', labelKey: 'navTimeOff' },
+];
+
+const BARBER_NAV_ITEMS: NavItemConfig[] = [
+  { key: 'register', href: '/dashboard', labelKey: 'navRegister' },
+  { key: 'walk-in', href: '/dashboard/walk-in', labelKey: 'navWalkIn' },
+  { key: 'history', href: '/dashboard/history', labelKey: 'navHistory' },
+  { key: 'profile', href: '/dashboard/profile', labelKey: 'navMyProfile' },
+  { key: 'availability', href: '/dashboard/availability', labelKey: 'navAvailability' },
+  { key: 'time-off', href: '/dashboard/time-off', labelKey: 'navTimeOff' },
 ];
 
 export default function StaffDashboardNav({
@@ -70,10 +58,7 @@ export default function StaffDashboardNav({
 }: StaffDashboardNavProps) {
   const t = useTranslations('dashboard');
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
-    if (item.ownerOnly && role !== 'OWNER') return false;
-    return true;
-  });
+  const visibleItems = role === 'OWNER' ? OWNER_NAV_ITEMS : BARBER_NAV_ITEMS;
 
   return (
     <nav

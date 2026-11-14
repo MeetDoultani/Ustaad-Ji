@@ -18,6 +18,13 @@ import {
   createBarberTimeOffStaff,
   deleteBarberTimeOffStaff,
 } from '@/lib/staff-config-service';
+import {
+  addBarberStaff,
+  removeBarberStaff,
+  reactivateBarberStaff,
+  updateBarberProfileStaff,
+  updateSalonProfileStaff,
+} from '@/lib/staff-roster-service';
 import { revalidatePath } from 'next/cache';
 
 const updateStatusSchema = z.object({
@@ -400,3 +407,173 @@ export async function deleteBarberTimeOffAction(data: z.infer<typeof deleteTimeO
   revalidatePath('/dashboard/time-off');
   return { ok: true, data: result.data };
 }
+
+// ============================================================================
+// PHASE 4B-2: ROSTER & PROFILE SERVER ACTIONS
+// ============================================================================
+
+const addBarberSchema = z.object({
+  salonId: z.string().min(1),
+  displayName: z.string().min(2).max(40),
+  phone: z.string().min(10),
+  experienceYears: z.number().int().min(0).max(60).default(0),
+  bio: z.string().max(300).optional().nullable(),
+});
+
+export async function addBarberAction(data: z.infer<typeof addBarberSchema>) {
+  const parsed = addBarberSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, code: 'INVALID_INPUT', error: 'Invalid input parameters.' };
+  }
+
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'OWNER') {
+    return { ok: false, code: 'UNAUTHORIZED', error: 'Unauthorized.' };
+  }
+
+  const result = await addBarberStaff(user, parsed.data.salonId, {
+    displayName: parsed.data.displayName,
+    phone: parsed.data.phone,
+    experienceYears: parsed.data.experienceYears,
+    bio: parsed.data.bio,
+  });
+
+  if (!result.ok) {
+    return { ok: false, code: result.code, error: result.message };
+  }
+
+  revalidatePath('/dashboard/barbers');
+  return { ok: true, data: result.data };
+}
+
+const removeBarberSchema = z.object({
+  salonId: z.string().min(1),
+  barberId: z.string().min(1),
+});
+
+export async function removeBarberAction(data: z.infer<typeof removeBarberSchema>) {
+  const parsed = removeBarberSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, code: 'INVALID_INPUT', error: 'Invalid input parameters.' };
+  }
+
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'OWNER') {
+    return { ok: false, code: 'UNAUTHORIZED', error: 'Unauthorized.' };
+  }
+
+  const result = await removeBarberStaff(user, parsed.data.salonId, parsed.data.barberId);
+
+  if (!result.ok) {
+    return { ok: false, code: result.code, error: result.message, data: result.data };
+  }
+
+  revalidatePath('/dashboard/barbers');
+  return { ok: true, data: result.data };
+}
+
+const reactivateBarberSchema = z.object({
+  salonId: z.string().min(1),
+  barberId: z.string().min(1),
+});
+
+export async function reactivateBarberAction(data: z.infer<typeof reactivateBarberSchema>) {
+  const parsed = reactivateBarberSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, code: 'INVALID_INPUT', error: 'Invalid input parameters.' };
+  }
+
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'OWNER') {
+    return { ok: false, code: 'UNAUTHORIZED', error: 'Unauthorized.' };
+  }
+
+  const result = await reactivateBarberStaff(user, parsed.data.salonId, parsed.data.barberId);
+
+  if (!result.ok) {
+    return { ok: false, code: result.code, error: result.message };
+  }
+
+  revalidatePath('/dashboard/barbers');
+  return { ok: true, data: result.data };
+}
+
+const updateBarberProfileSchema = z.object({
+  barberId: z.string().min(1),
+  displayName: z.string().min(2).max(40),
+  experienceYears: z.number().int().min(0).max(60),
+  bio: z.string().max(300).optional().nullable(),
+  photoUrl: z.string().max(300).optional().nullable(),
+});
+
+export async function updateBarberProfileAction(data: z.infer<typeof updateBarberProfileSchema>) {
+  const parsed = updateBarberProfileSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, code: 'INVALID_INPUT', error: 'Invalid input parameters.' };
+  }
+
+  const user = await getCurrentUser();
+  if (!user || (user.role !== 'BARBER' && user.role !== 'OWNER')) {
+    return { ok: false, code: 'UNAUTHORIZED', error: 'Unauthorized.' };
+  }
+
+  const result = await updateBarberProfileStaff(user, parsed.data.barberId, {
+    displayName: parsed.data.displayName,
+    experienceYears: parsed.data.experienceYears,
+    bio: parsed.data.bio,
+    photoUrl: parsed.data.photoUrl,
+  });
+
+  if (!result.ok) {
+    return { ok: false, code: result.code, error: result.message };
+  }
+
+  revalidatePath('/dashboard/profile');
+  revalidatePath(`/dashboard/barbers/${parsed.data.barberId}`);
+  return { ok: true, data: result.data };
+}
+
+const updateSalonProfileSchema = z.object({
+  salonId: z.string().min(1),
+  name: z.string().min(2).max(60),
+  nameHi: z.string().max(100).optional().nullable(),
+  description: z.string().max(500).optional().nullable(),
+  phone: z.string().optional().nullable(),
+  addressLine: z.string().min(5).max(120),
+  area: z.string().min(2).max(60),
+  city: z.string().min(2).max(60),
+  pincode: z.string().regex(/^\d{6}$/),
+  requiresApproval: z.boolean(),
+});
+
+export async function updateSalonProfileAction(data: z.infer<typeof updateSalonProfileSchema>) {
+  const parsed = updateSalonProfileSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, code: 'INVALID_INPUT', error: 'Invalid input parameters.' };
+  }
+
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'OWNER') {
+    return { ok: false, code: 'UNAUTHORIZED', error: 'Unauthorized.' };
+  }
+
+  const result = await updateSalonProfileStaff(user, parsed.data.salonId, {
+    name: parsed.data.name,
+    nameHi: parsed.data.nameHi,
+    description: parsed.data.description,
+    phone: parsed.data.phone,
+    addressLine: parsed.data.addressLine,
+    area: parsed.data.area,
+    city: parsed.data.city,
+    pincode: parsed.data.pincode,
+    requiresApproval: parsed.data.requiresApproval,
+  });
+
+  if (!result.ok) {
+    return { ok: false, code: result.code, error: result.message };
+  }
+
+  revalidatePath('/dashboard/profile');
+  return { ok: true, data: result.data };
+}
+
